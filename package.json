@@ -1,0 +1,49 @@
+{
+  "name": "cjk-number",
+  "version": "0.1.0",
+  "description": "Convert between numbers and CJK number systems",
+  "author": "gary2",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/gary2/cjk-number.git"
+  },
+  "bugs": {
+    "url": "https://github.com/gary2/cjk-number/issues"
+  },
+  "homepage": "https://github.com/gary2/cjk-number#readme",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "vitest run",
+    "dev:test": "vitest",
+    "pack:check": "npm pack --dry-run",
+    "release:check": "npm run typecheck && npm run test && npm run build && npm run pack:check",
+    "prepublishOnly": "npm run typecheck && npm run test && npm run build"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "keywords": [
+    "cjk",
+    "chinese",
+    "number"
+  ],
+  "license": "MIT",
+  "devDependencies": {
+    "@types/node": "^25.5.0",
+    "typescript": "^5.8.3",
+    "vitest": "^2.1.9"
+  }
+}
