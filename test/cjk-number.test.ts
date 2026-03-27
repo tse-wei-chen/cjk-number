@@ -3,10 +3,18 @@ import {
 	cjkEarthlyBranch,
 	cjkHeavenlyStem,
 	cjkIdeographic,
+	hiragana,
+	hiraganaIroha,
 	integer,
+	japaneseFormal,
+	japaneseInformal,
+	katakana,
+	katakanaIroha,
+	koreanHangulFormal,
+	koreanHanjaFormal,
+	koreanHanjaInformal,
 	simpChineseFormal,
 	simpChineseInformal,
-	tradFormalPositionalUnits,
 	tradChineseFormal,
 	tradChineseInformal
 } from "../src/index";
@@ -90,7 +98,8 @@ describe("new numeric capabilities", () => {
 
   it("supports decimals", () => {
     expect(integer.parseInt("一點二三")).toBeCloseTo(1.23);
-    expect(simpChineseInformal.parse(12.34)).toBe("十二點三四");
+    expect(integer.parseInt("一點23")).toBeCloseTo(1.23);
+    expect(simpChineseInformal.parse(12.34)).toBe("十二点三四");
   });
 
   it("supports bigint parse for very large integers", () => {
@@ -137,79 +146,70 @@ describe("new numeric capabilities", () => {
   });
 });
 
-describe("unit tables", () => {
-  it("exports requested traditional formal positional units", () => {
-    expect(tradFormalPositionalUnits).toEqual([
-      "",
-      "拾",
-      "佰",
-      "仟",
-      "萬",
-      "拾",
-      "佰",
-      "仟",
-      "億",
-      "拾",
-      "佰",
-      "仟",
-      "兆",
-      "拾",
-      "佰",
-      "仟",
-      "京",
-      "拾",
-      "佰",
-      "仟",
-      "垓",
-      "拾",
-      "佰",
-      "仟",
-      "秭",
-      "拾",
-      "佰",
-      "仟",
-      "穰",
-      "拾",
-      "佰",
-      "仟",
-      "溝",
-      "拾",
-      "佰",
-      "仟",
-      "澗",
-      "拾",
-      "佰",
-      "仟",
-      "正",
-      "拾",
-      "佰",
-      "仟",
-      "載",
-      "拾",
-      "佰",
-      "仟",
-      "極",
-      "拾",
-      "佰",
-      "仟",
-      "恆河沙",
-      "拾",
-      "佰",
-      "仟",
-      "阿僧祇",
-      "拾",
-      "佰",
-      "仟",
-      "那由他",
-      "拾",
-      "佰",
-      "仟",
-      "不可思議",
-      "拾",
-      "佰",
-      "仟",
-      "無量大數"
-    ]);
+describe("edge cases and error paths", () => {
+  it("handles strict mode validation", () => {
+    expect(integer.parseInt("一億", { strict: true })).toBe(100000000);
+    expect(() => integer.parseInt("abc", { strict: true })).toThrow(SyntaxError);
+  });
+
+  it("throws for malformed numeric input", () => {
+    expect(() => integer.parseInt("   ")).toThrow(SyntaxError);
+    expect(() => integer.parseInt("-")).toThrow(SyntaxError);
+    expect(() => integer.parseInt("一點")).toThrow(SyntaxError);
+    expect(() => integer.parseInt("一點a")).toThrow(SyntaxError);
+    expect(() => integer.parseInt("一十a")).toThrow(SyntaxError);
+    expect(() => integer.parseInt("一a")).toThrow(SyntaxError);
+  });
+
+  it("parses arabic digit strings and promotes overflow to bigint", () => {
+    expect(integer.parseInt("123456")).toBe(123456);
+    expect(integer.parseInt("12萬")).toBe(120000);
+    expect(integer.parseInt("萬", { preferBigInt: true })).toBe(10000n);
+    const overflow = integer.parseInt("一京");
+    expect(typeof overflow).toBe("bigint");
+    expect(overflow).toBe(10n ** 16n);
+  });
+
+  it("throws for decimal integer part above MAX_SAFE_INTEGER", () => {
+    expect(() => integer.parseInt("一京點一")).toThrow(RangeError);
+  });
+
+  it("supports decimal parse edge forms", () => {
+    expect(integer.parseInt("點五")).toBeCloseTo(0.5);
+    expect(integer.parseInt("일점이")).toBeCloseTo(1.2);
+    expect(integer.parseInt("負一點二")).toBeCloseTo(-1.2);
+  });
+
+  it("throws for unsupported formatter inputs", () => {
+    expect(() => cjkHeavenlyStem.parse(1.2)).toThrow(RangeError);
+    expect(() => tradChineseInformal.parse(Number.NaN)).toThrow(RangeError);
+    expect(() => tradChineseInformal.parse(1e-7)).toThrow(RangeError);
+    expect(() => tradChineseInformal.parse(10n ** 72n)).toThrow(RangeError);
+  });
+
+  it("formats zero explicitly", () => {
+    expect(tradChineseInformal.parse(0)).toBe("零");
+    expect(simpChineseFormal.parse(0)).toBe("零");
+  });
+
+  it("covers decimal formatting branches for all numeric systems", () => {
+    expect(cjkIdeographic.parse(1.5)).toBe("一點五");
+    expect(cjkIdeographic.parse(10n ** 8n)).toBe("一億");
+    expect(cjkIdeographic.parse(-1.02)).toBe("負一點零二");
+    expect(tradChineseInformal.parse(2.5)).toBe("二點五");
+    expect(tradChineseFormal.parse(3.5)).toBe("參點伍");
+    expect(simpChineseFormal.parse(4.5)).toBe("肆点伍");
+    expect(koreanHangulFormal.parse(5.6)).toBe("오점육");
+    expect(koreanHanjaFormal.parse(5.6)).toBe("五점六");
+    expect(koreanHanjaInformal.parse(5.6)).toBe("五점六");
+    expect(koreanHanjaInformal.parse(10n ** 8n)).toBe("一億");
+    expect(japaneseFormal.parse(5.6)).toBe("五点六");
+    expect(japaneseInformal.parse(5.6)).toBe("五点六");
+  });
+
+  it("uses cyclic parse options on integer.parseInt for stems and branches", () => {
+    expect(integer.parseInt("甲", { heavenlyStemMode: "cyclic" })).toBe(1);
+    expect(integer.parseInt("子", { earthlyBranchMode: "cyclic" })).toBe(1);
   });
 });
 
@@ -222,6 +222,55 @@ describe("heavenly stem and earthly branch modes", () => {
   it("throws in fixed mode when out of range", () => {
     expect(() => cjkHeavenlyStem.parse(11)).toThrow(RangeError);
     expect(() => cjkEarthlyBranch.parse(0)).toThrow(RangeError);
+  });
+});
+
+describe("korean and japanese sequence systems", () => {
+  it("formats korean numeric systems up to large units", () => {
+    expect(koreanHangulFormal.parse(1)).toBe("일");
+    expect(koreanHangulFormal.parse(1023)).toBe("일천영이십삼");
+    expect(koreanHangulFormal.parse(10n ** 68n)).toBe("일무량대수");
+    expect(koreanHanjaFormal.parse(1)).toBe("壹");
+    expect(koreanHanjaFormal.parse(1023)).toBe("壹仟零貳拾參");
+    expect(koreanHanjaFormal.parse(10n ** 68n)).toBe("壹無量大數");
+    expect(koreanHanjaInformal.parse(1)).toBe("一");
+    expect(koreanHanjaInformal.parse(1023)).toBe("一千零二十三");
+  });
+
+  it("formats japanese numeric systems up to large units", () => {
+    expect(japaneseFormal.parse(1)).toBe("壱");
+    expect(japaneseFormal.parse(1023)).toBe("壱千零弐拾参");
+    expect(japaneseFormal.parse(10n ** 68n)).toBe("壱無量大数");
+    expect(japaneseInformal.parse(1)).toBe("一");
+    expect(japaneseInformal.parse(1023)).toBe("一千零二十三");
+    expect(japaneseInformal.parse(10n ** 68n)).toBe("一無量大数");
+  });
+
+  it("keeps hiragana and katakana as sequence systems", () => {
+    expect(hiragana.parse(1)).toBe("あ");
+    expect(hiragana.parse(10)).toBe("こ");
+    expect(hiragana.parse(46)).toBe("ん");
+    expect(hiraganaIroha.parse(1)).toBe("い");
+    expect(hiraganaIroha.parse(10)).toBe("ぬ");
+    expect(hiraganaIroha.parse(47)).toBe("す");
+    expect(katakana.parse(1)).toBe("ア");
+    expect(katakana.parse(10)).toBe("コ");
+    expect(katakana.parse(46)).toBe("ン");
+    expect(katakanaIroha.parse(1)).toBe("イ");
+    expect(katakanaIroha.parse(10)).toBe("ヌ");
+    expect(katakanaIroha.parse(47)).toBe("ス");
+  });
+
+  it("auto-detects sequence symbols in integer.parseInt", () => {
+    expect(integer.parseInt("일")).toBe(1);
+    expect(integer.parseInt("일십")).toBe(10);
+    expect(integer.parseInt("일억삼천만")).toBe(130000000);
+    expect(integer.parseInt("壹拾")).toBe(10);
+    expect(integer.parseInt("壱拾")).toBe(10);
+    expect(integer.parseInt("壱京", { preferBigInt: true })).toBe(10n ** 16n);
+    expect(integer.parseInt("十")).toBe(10);
+    expect(integer.parseInt("ぬ")).toBe(10);
+    expect(integer.parseInt("ヌ")).toBe(10);
   });
 });
 

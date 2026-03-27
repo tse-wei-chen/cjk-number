@@ -2,6 +2,41 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.2.0] - 2026-03-27
+
+### Added
+
+- Korean and Japanese numeric formatters:
+  - koreanHangulFormal
+  - koreanHanjaFormal
+  - koreanHanjaInformal
+  - japaneseFormal
+  - japaneseInformal
+- Kana sequence formatters:
+  - hiragana / hiraganaIroha
+  - katakana / katakanaIroha
+- Locale-specific decimal point handling:
+  - Traditional Chinese: 點
+  - Simplified Chinese: 点
+  - Japanese: 点
+  - Korean: 점
+- Coverage command and gate:
+  - npm run coverage
+  - Vitest coverage thresholds set to 100% for lines/functions/branches/statements
+
+### Changed
+
+- Normalization expanded for Korean/Japanese forms and sequence symbol parsing.
+- Documentation expanded for multi-system coverage and API behavior.
+
+### Removed
+
+- Removed public export `tradFormalPositionalUnits` from API, tests, and README.
+
+### Quality
+
+- typecheck, tests, build, and coverage all pass locally.
+
 ## [0.1.0] - 2026-03-27
 
 ### Added
