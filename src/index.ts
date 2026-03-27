@@ -16,59 +16,295 @@ type IntegerLike = number | bigint;
 interface DigitSet {
   zero: string;
   point: string;
-  digits: [string, string, string, string, string, string, string, string, string];
+  digits: [
+    string,
+    string,
+    string,
+    string,
+    string,
+    string,
+    string,
+    string,
+    string,
+  ];
   smallUnits: [string, string, string];
   bigUnits: string[];
 }
 
-const STEMS = ["甲", "乙", "丙", "丁", "戊", "己", "庚", "辛", "壬", "癸"] as const;
-const BRANCHES = ["子", "丑", "寅", "卯", "辰", "巳", "午", "未", "申", "酉", "戌", "亥"] as const;
-const KOREAN_HANGUL_DIGITS = ["일", "이", "삼", "사", "오", "육", "칠", "팔", "구"] as const;
-const KOREAN_HANJA_FORMAL_DIGITS = ["壹", "貳", "參", "四", "五", "六", "七", "八", "九"] as const;
-const KOREAN_HANJA_INFORMAL_DIGITS = ["一", "二", "三", "四", "五", "六", "七", "八", "九"] as const;
-const JAPANESE_FORMAL_DIGITS = ["壱", "弐", "参", "四", "五", "六", "七", "八", "九"] as const;
-const JAPANESE_INFORMAL_DIGITS = ["一", "二", "三", "四", "五", "六", "七", "八", "九"] as const;
+const STEMS = [
+  "甲",
+  "乙",
+  "丙",
+  "丁",
+  "戊",
+  "己",
+  "庚",
+  "辛",
+  "壬",
+  "癸",
+] as const;
+const BRANCHES = [
+  "子",
+  "丑",
+  "寅",
+  "卯",
+  "辰",
+  "巳",
+  "午",
+  "未",
+  "申",
+  "酉",
+  "戌",
+  "亥",
+] as const;
+const KOREAN_HANGUL_DIGITS = [
+  "일",
+  "이",
+  "삼",
+  "사",
+  "오",
+  "육",
+  "칠",
+  "팔",
+  "구",
+] as const;
+const KOREAN_HANJA_FORMAL_DIGITS = [
+  "壹",
+  "貳",
+  "參",
+  "四",
+  "五",
+  "六",
+  "七",
+  "八",
+  "九",
+] as const;
+const KOREAN_HANJA_INFORMAL_DIGITS = [
+  "一",
+  "二",
+  "三",
+  "四",
+  "五",
+  "六",
+  "七",
+  "八",
+  "九",
+] as const;
+const JAPANESE_FORMAL_DIGITS = [
+  "壱",
+  "弐",
+  "参",
+  "四",
+  "五",
+  "六",
+  "七",
+  "八",
+  "九",
+] as const;
+const JAPANESE_INFORMAL_DIGITS = [
+  "一",
+  "二",
+  "三",
+  "四",
+  "五",
+  "六",
+  "七",
+  "八",
+  "九",
+] as const;
 const HIRAGANA = [
-  "あ", "い", "う", "え", "お",
-  "か", "き", "く", "け", "こ",
-  "さ", "し", "す", "せ", "そ",
-  "た", "ち", "つ", "て", "と",
-  "な", "に", "ぬ", "ね", "の",
-  "は", "ひ", "ふ", "へ", "ほ",
-  "ま", "み", "む", "め", "も",
-  "や", "ゆ", "よ",
-  "ら", "り", "る", "れ", "ろ",
-  "わ", "を", "ん"
+  "あ",
+  "い",
+  "う",
+  "え",
+  "お",
+  "か",
+  "き",
+  "く",
+  "け",
+  "こ",
+  "さ",
+  "し",
+  "す",
+  "せ",
+  "そ",
+  "た",
+  "ち",
+  "つ",
+  "て",
+  "と",
+  "な",
+  "に",
+  "ぬ",
+  "ね",
+  "の",
+  "は",
+  "ひ",
+  "ふ",
+  "へ",
+  "ほ",
+  "ま",
+  "み",
+  "む",
+  "め",
+  "も",
+  "や",
+  "ゆ",
+  "よ",
+  "ら",
+  "り",
+  "る",
+  "れ",
+  "ろ",
+  "わ",
+  "を",
+  "ん",
 ] as const;
 const HIRAGANA_IROHA = [
-  "い", "ろ", "は", "に", "ほ", "へ", "と",
-  "ち", "り", "ぬ", "る", "を", "わ", "か",
-  "よ", "た", "れ", "そ", "つ", "ね", "な",
-  "ら", "む", "う", "ゐ", "の", "お", "く",
-  "や", "ま", "け", "ふ", "こ", "え", "て",
-  "あ", "さ", "き", "ゆ", "め", "み", "し",
-  "ゑ", "ひ", "も", "せ", "す"
+  "い",
+  "ろ",
+  "は",
+  "に",
+  "ほ",
+  "へ",
+  "と",
+  "ち",
+  "り",
+  "ぬ",
+  "る",
+  "を",
+  "わ",
+  "か",
+  "よ",
+  "た",
+  "れ",
+  "そ",
+  "つ",
+  "ね",
+  "な",
+  "ら",
+  "む",
+  "う",
+  "ゐ",
+  "の",
+  "お",
+  "く",
+  "や",
+  "ま",
+  "け",
+  "ふ",
+  "こ",
+  "え",
+  "て",
+  "あ",
+  "さ",
+  "き",
+  "ゆ",
+  "め",
+  "み",
+  "し",
+  "ゑ",
+  "ひ",
+  "も",
+  "せ",
+  "す",
 ] as const;
 const KATAKANA = [
-  "ア", "イ", "ウ", "エ", "オ",
-  "カ", "キ", "ク", "ケ", "コ",
-  "サ", "シ", "ス", "セ", "ソ",
-  "タ", "チ", "ツ", "テ", "ト",
-  "ナ", "ニ", "ヌ", "ネ", "ノ",
-  "ハ", "ヒ", "フ", "ヘ", "ホ",
-  "マ", "ミ", "ム", "メ", "モ",
-  "ヤ", "ユ", "ヨ",
-  "ラ", "リ", "ル", "レ", "ロ",
-  "ワ", "ヲ", "ン"
+  "ア",
+  "イ",
+  "ウ",
+  "エ",
+  "オ",
+  "カ",
+  "キ",
+  "ク",
+  "ケ",
+  "コ",
+  "サ",
+  "シ",
+  "ス",
+  "セ",
+  "ソ",
+  "タ",
+  "チ",
+  "ツ",
+  "テ",
+  "ト",
+  "ナ",
+  "ニ",
+  "ヌ",
+  "ネ",
+  "ノ",
+  "ハ",
+  "ヒ",
+  "フ",
+  "ヘ",
+  "ホ",
+  "マ",
+  "ミ",
+  "ム",
+  "メ",
+  "モ",
+  "ヤ",
+  "ユ",
+  "ヨ",
+  "ラ",
+  "リ",
+  "ル",
+  "レ",
+  "ロ",
+  "ワ",
+  "ヲ",
+  "ン",
 ] as const;
 const KATAKANA_IROHA = [
-  "イ", "ロ", "ハ", "ニ", "ホ", "ヘ", "ト",
-  "チ", "リ", "ヌ", "ル", "ヲ", "ワ", "カ",
-  "ヨ", "タ", "レ", "ソ", "ツ", "ネ", "ナ",
-  "ラ", "ム", "ウ", "ヰ", "ノ", "オ", "ク",
-  "ヤ", "マ", "ケ", "フ", "コ", "エ", "テ",
-  "ア", "サ", "キ", "ユ", "メ", "ミ", "シ",
-  "ヱ", "ヒ", "モ", "セ", "ス"
+  "イ",
+  "ロ",
+  "ハ",
+  "ニ",
+  "ホ",
+  "ヘ",
+  "ト",
+  "チ",
+  "リ",
+  "ヌ",
+  "ル",
+  "ヲ",
+  "ワ",
+  "カ",
+  "ヨ",
+  "タ",
+  "レ",
+  "ソ",
+  "ツ",
+  "ネ",
+  "ナ",
+  "ラ",
+  "ム",
+  "ウ",
+  "ヰ",
+  "ノ",
+  "オ",
+  "ク",
+  "ヤ",
+  "マ",
+  "ケ",
+  "フ",
+  "コ",
+  "エ",
+  "テ",
+  "ア",
+  "サ",
+  "キ",
+  "ユ",
+  "メ",
+  "ミ",
+  "シ",
+  "ヱ",
+  "ヒ",
+  "モ",
+  "セ",
+  "ス",
 ] as const;
 
 const KOREAN_BIG_UNITS = [
@@ -88,7 +324,7 @@ const KOREAN_BIG_UNITS = [
   "아승기",
   "나유타",
   "불가사의",
-  "무량대수"
+  "무량대수",
 ] as const;
 
 const JAPANESE_BIG_UNITS = [
@@ -108,7 +344,7 @@ const JAPANESE_BIG_UNITS = [
   "阿僧祇",
   "那由他",
   "不可思議",
-  "無量大数"
+  "無量大数",
 ] as const;
 
 const SEQUENCE_SYMBOL_TO_NUMBER: Record<string, number> = (() => {
@@ -130,34 +366,34 @@ const SEQUENCE_SYMBOL_TO_NUMBER: Record<string, number> = (() => {
 })();
 
 const CANONICAL_DIGITS: Record<string, number> = {
-  "零": 0,
-  "영": 0,
-  "령": 0,
-  "〇": 0,
+  零: 0,
+  영: 0,
+  령: 0,
+  〇: 0,
   "○": 0,
-  "一": 1,
-  "壹": 1,
-  "二": 2,
-  "貳": 2,
-  "贰": 2,
-  "兩": 2,
-  "两": 2,
-  "三": 3,
-  "參": 3,
-  "叁": 3,
-  "四": 4,
-  "肆": 4,
-  "五": 5,
-  "伍": 5,
-  "六": 6,
-  "陸": 6,
-  "陆": 6,
-  "七": 7,
-  "柒": 7,
-  "八": 8,
-  "捌": 8,
-  "九": 9,
-  "玖": 9
+  一: 1,
+  壹: 1,
+  二: 2,
+  貳: 2,
+  贰: 2,
+  兩: 2,
+  两: 2,
+  三: 3,
+  參: 3,
+  叁: 3,
+  四: 4,
+  肆: 4,
+  五: 5,
+  伍: 5,
+  六: 6,
+  陸: 6,
+  陆: 6,
+  七: 7,
+  柒: 7,
+  八: 8,
+  捌: 8,
+  九: 9,
+  玖: 9,
 };
 
 const SMALL_UNITS: Record<string, bigint> = {
@@ -166,7 +402,7 @@ const SMALL_UNITS: Record<string, bigint> = {
   百: 100n,
   佰: 100n,
   千: 1000n,
-  仟: 1000n
+  仟: 1000n,
 };
 
 const TRAD_BIG_UNITS = [
@@ -186,7 +422,7 @@ const TRAD_BIG_UNITS = [
   "阿僧祇",
   "那由他",
   "不可思議",
-  "無量大數"
+  "無量大數",
 ] as const;
 
 const SIMP_BIG_UNITS = [
@@ -206,12 +442,15 @@ const SIMP_BIG_UNITS = [
   "阿僧祇",
   "那由他",
   "不可思议",
-  "无量大数"
+  "无量大数",
 ] as const;
 
 function createBigUnitOrder(units: readonly string[]): Array<[string, bigint]> {
   return units
-    .map((unit, index) => [unit, 10n ** BigInt((index + 1) * 4)] as [string, bigint])
+    .map(
+      (unit, index) =>
+        [unit, 10n ** BigInt((index + 1) * 4)] as [string, bigint],
+    )
     .reverse();
 }
 
@@ -220,7 +459,7 @@ const TRAD_INFORMAL_SET: DigitSet = {
   point: "點",
   digits: ["一", "二", "三", "四", "五", "六", "七", "八", "九"],
   smallUnits: ["十", "百", "千"],
-  bigUnits: [...TRAD_BIG_UNITS]
+  bigUnits: [...TRAD_BIG_UNITS],
 };
 
 const TRAD_FORMAL_SET: DigitSet = {
@@ -228,7 +467,7 @@ const TRAD_FORMAL_SET: DigitSet = {
   point: "點",
   digits: ["壹", "貳", "參", "肆", "伍", "陸", "柒", "捌", "玖"],
   smallUnits: ["拾", "佰", "仟"],
-  bigUnits: [...TRAD_BIG_UNITS]
+  bigUnits: [...TRAD_BIG_UNITS],
 };
 
 const SIMP_INFORMAL_SET: DigitSet = {
@@ -236,7 +475,7 @@ const SIMP_INFORMAL_SET: DigitSet = {
   point: "点",
   digits: ["一", "二", "三", "四", "五", "六", "七", "八", "九"],
   smallUnits: ["十", "百", "千"],
-  bigUnits: [...SIMP_BIG_UNITS]
+  bigUnits: [...SIMP_BIG_UNITS],
 };
 
 const SIMP_FORMAL_SET: DigitSet = {
@@ -244,7 +483,7 @@ const SIMP_FORMAL_SET: DigitSet = {
   point: "点",
   digits: ["壹", "贰", "叁", "肆", "伍", "陆", "柒", "捌", "玖"],
   smallUnits: ["拾", "佰", "仟"],
-  bigUnits: [...SIMP_BIG_UNITS]
+  bigUnits: [...SIMP_BIG_UNITS],
 };
 
 const KOREAN_HANGUL_SET: DigitSet = {
@@ -252,7 +491,7 @@ const KOREAN_HANGUL_SET: DigitSet = {
   point: "점",
   digits: [...KOREAN_HANGUL_DIGITS],
   smallUnits: ["십", "백", "천"],
-  bigUnits: [...KOREAN_BIG_UNITS]
+  bigUnits: [...KOREAN_BIG_UNITS],
 };
 
 const KOREAN_HANJA_FORMAL_SET: DigitSet = {
@@ -260,7 +499,7 @@ const KOREAN_HANJA_FORMAL_SET: DigitSet = {
   point: "점",
   digits: [...KOREAN_HANJA_FORMAL_DIGITS],
   smallUnits: ["拾", "佰", "仟"],
-  bigUnits: [...TRAD_BIG_UNITS]
+  bigUnits: [...TRAD_BIG_UNITS],
 };
 
 const KOREAN_HANJA_INFORMAL_SET: DigitSet = {
@@ -268,7 +507,7 @@ const KOREAN_HANJA_INFORMAL_SET: DigitSet = {
   point: "점",
   digits: [...KOREAN_HANJA_INFORMAL_DIGITS],
   smallUnits: ["十", "百", "千"],
-  bigUnits: [...TRAD_BIG_UNITS]
+  bigUnits: [...TRAD_BIG_UNITS],
 };
 
 const JAPANESE_FORMAL_SET: DigitSet = {
@@ -276,7 +515,7 @@ const JAPANESE_FORMAL_SET: DigitSet = {
   point: "点",
   digits: [...JAPANESE_FORMAL_DIGITS],
   smallUnits: ["拾", "百", "千"],
-  bigUnits: [...JAPANESE_BIG_UNITS]
+  bigUnits: [...JAPANESE_BIG_UNITS],
 };
 
 const JAPANESE_INFORMAL_SET: DigitSet = {
@@ -284,7 +523,7 @@ const JAPANESE_INFORMAL_SET: DigitSet = {
   point: "点",
   digits: [...JAPANESE_INFORMAL_DIGITS],
   smallUnits: ["十", "百", "千"],
-  bigUnits: [...JAPANESE_BIG_UNITS]
+  bigUnits: [...JAPANESE_BIG_UNITS],
 };
 
 const BIG_UNIT_ORDER = createBigUnitOrder(SIMP_BIG_UNITS);
@@ -462,7 +701,10 @@ function toBestNumeric(value: bigint, preferBigInt: boolean): number | bigint {
     return value;
   }
 
-  if (value > BigInt(Number.MAX_SAFE_INTEGER) || value < BigInt(Number.MIN_SAFE_INTEGER)) {
+  if (
+    value > BigInt(Number.MAX_SAFE_INTEGER) ||
+    value < BigInt(Number.MIN_SAFE_INTEGER)
+  ) {
     return value;
   }
 
@@ -470,28 +712,41 @@ function toBestNumeric(value: bigint, preferBigInt: boolean): number | bigint {
 }
 
 function validateStrictCharacters(input: string): void {
-  const allowed = /^[0-9零〇○一二三四五六七八九十百千萬万億亿兆京垓秭穰溝沟澗涧正載载極极恆恒河沙阿僧祇那由他不思議议可無无量大數数點点점壹貳贰參叁肆伍陸陆柒捌玖兩两拾佰仟負负壱弐参ぁ-ゟ゠-ヿ가-힣.-]+$/;
+  const allowed =
+    /^[0-9零〇○一二三四五六七八九十百千萬万億亿兆京垓秭穰溝沟澗涧正載载極极恆恒河沙阿僧祇那由他不思議议可無无量大數数點点점壹貳贰參叁肆伍陸陆柒捌玖兩两拾佰仟負负壱弐参ぁ-ゟ゠-ヿ가-힣.-]+$/;
   if (!allowed.test(input)) {
-    throw new SyntaxError("Input contains unsupported characters in strict mode");
+    throw new SyntaxError(
+      "Input contains unsupported characters in strict mode",
+    );
   }
 }
 
-function fromCycle(value: IntegerLike, chars: readonly string[], mode: CyclicMode): string {
+function fromCycle(
+  value: IntegerLike,
+  chars: readonly string[],
+  mode: CyclicMode,
+): string {
   const asBigInt = toBigInt(value);
   const length = BigInt(chars.length);
 
   if (mode === "fixed") {
     if (asBigInt < 1n || asBigInt > length) {
-      throw new RangeError(`Value must be in 1..${chars.length} when mode is fixed`);
+      throw new RangeError(
+        `Value must be in 1..${chars.length} when mode is fixed`,
+      );
     }
     return chars[Number(asBigInt - 1n)];
   }
 
-  const normalized = ((asBigInt - 1n) % length + length) % length;
+  const normalized = (((asBigInt - 1n) % length) + length) % length;
   return chars[Number(normalized)];
 }
 
-function parseCycle(input: string, chars: readonly string[], mode: CyclicMode): number {
+function parseCycle(
+  input: string,
+  chars: readonly string[],
+  mode: CyclicMode,
+): number {
   const index = chars.indexOf(input);
   if (index < 0) {
     throw new SyntaxError(`Unknown symbol ${input}`);
@@ -614,7 +869,10 @@ function formatDecimal(value: number, set: DigitSet): string {
   return negative ? `負${withSign}` : withSign;
 }
 
-function parseValue(input: string, options: IntegerParseOptions = {}): number | bigint {
+function parseValue(
+  input: string,
+  options: IntegerParseOptions = {},
+): number | bigint {
   const modeStem = options.heavenlyStemMode ?? "fixed";
   const modeBranch = options.earthlyBranchMode ?? "fixed";
 
@@ -653,7 +911,9 @@ function parseValue(input: string, options: IntegerParseOptions = {}): number | 
     const fracValue = parseFractionDigits(fracRaw);
 
     if (intValue > BigInt(Number.MAX_SAFE_INTEGER)) {
-      throw new RangeError("Decimal parse does not support integer part above MAX_SAFE_INTEGER");
+      throw new RangeError(
+        "Decimal parse does not support integer part above MAX_SAFE_INTEGER",
+      );
     }
 
     const composed = Number(intValue) + fracValue;
@@ -668,7 +928,7 @@ function parseValue(input: string, options: IntegerParseOptions = {}): number | 
 export const integer = {
   parseInt(input: string, options?: IntegerParseOptions): number | bigint {
     return parseValue(input, options);
-  }
+  },
 };
 
 export const cjkIdeographic = {
@@ -677,7 +937,7 @@ export const cjkIdeographic = {
       return formatDecimal(value, TRAD_INFORMAL_SET);
     }
     return formatChineseInteger(value, TRAD_INFORMAL_SET);
-  }
+  },
 };
 
 export const tradChineseInformal = {
@@ -686,7 +946,7 @@ export const tradChineseInformal = {
       return formatDecimal(value, TRAD_INFORMAL_SET);
     }
     return formatChineseInteger(value, TRAD_INFORMAL_SET);
-  }
+  },
 };
 
 export const tradChineseFormal = {
@@ -695,7 +955,7 @@ export const tradChineseFormal = {
       return formatDecimal(value, TRAD_FORMAL_SET);
     }
     return formatChineseInteger(value, TRAD_FORMAL_SET);
-  }
+  },
 };
 
 export const simpChineseInformal = {
@@ -704,7 +964,7 @@ export const simpChineseInformal = {
       return formatDecimal(value, SIMP_INFORMAL_SET);
     }
     return formatChineseInteger(value, SIMP_INFORMAL_SET);
-  }
+  },
 };
 
 export const simpChineseFormal = {
@@ -713,19 +973,19 @@ export const simpChineseFormal = {
       return formatDecimal(value, SIMP_FORMAL_SET);
     }
     return formatChineseInteger(value, SIMP_FORMAL_SET);
-  }
+  },
 };
 
 export const cjkHeavenlyStem = {
   parse(value: IntegerLike, options: SystemParseOptions = {}): string {
     return fromCycle(value, STEMS, options.mode ?? "fixed");
-  }
+  },
 };
 
 export const cjkEarthlyBranch = {
   parse(value: IntegerLike, options: SystemParseOptions = {}): string {
     return fromCycle(value, BRANCHES, options.mode ?? "fixed");
-  }
+  },
 };
 
 export const koreanHangulFormal = {
@@ -734,7 +994,7 @@ export const koreanHangulFormal = {
       return formatDecimal(value, KOREAN_HANGUL_SET);
     }
     return formatChineseInteger(value, KOREAN_HANGUL_SET);
-  }
+  },
 };
 
 export const koreanHanjaFormal = {
@@ -743,7 +1003,7 @@ export const koreanHanjaFormal = {
       return formatDecimal(value, KOREAN_HANJA_FORMAL_SET);
     }
     return formatChineseInteger(value, KOREAN_HANJA_FORMAL_SET);
-  }
+  },
 };
 
 export const koreanHanjaInformal = {
@@ -752,7 +1012,7 @@ export const koreanHanjaInformal = {
       return formatDecimal(value, KOREAN_HANJA_INFORMAL_SET);
     }
     return formatChineseInteger(value, KOREAN_HANJA_INFORMAL_SET);
-  }
+  },
 };
 
 export const japaneseFormal = {
@@ -761,7 +1021,7 @@ export const japaneseFormal = {
       return formatDecimal(value, JAPANESE_FORMAL_SET);
     }
     return formatChineseInteger(value, JAPANESE_FORMAL_SET);
-  }
+  },
 };
 
 export const japaneseInformal = {
@@ -770,31 +1030,31 @@ export const japaneseInformal = {
       return formatDecimal(value, JAPANESE_INFORMAL_SET);
     }
     return formatChineseInteger(value, JAPANESE_INFORMAL_SET);
-  }
+  },
 };
 
 export const hiragana = {
   parse(value: IntegerLike, options: SystemParseOptions = {}): string {
     return fromCycle(value, HIRAGANA, options.mode ?? "fixed");
-  }
+  },
 };
 
 export const hiraganaIroha = {
   parse(value: IntegerLike, options: SystemParseOptions = {}): string {
     return fromCycle(value, HIRAGANA_IROHA, options.mode ?? "fixed");
-  }
+  },
 };
 
 export const katakana = {
   parse(value: IntegerLike, options: SystemParseOptions = {}): string {
     return fromCycle(value, KATAKANA, options.mode ?? "fixed");
-  }
+  },
 };
 
 export const katakanaIroha = {
   parse(value: IntegerLike, options: SystemParseOptions = {}): string {
     return fromCycle(value, KATAKANA_IROHA, options.mode ?? "fixed");
-  }
+  },
 };
 
 export const systems = {
@@ -808,5 +1068,5 @@ export const systems = {
   hiragana: HIRAGANA,
   hiraganaIroha: HIRAGANA_IROHA,
   katakana: KATAKANA,
-  katakanaIroha: KATAKANA_IROHA
+  katakanaIroha: KATAKANA_IROHA,
 };

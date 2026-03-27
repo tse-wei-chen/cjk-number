@@ -16,7 +16,7 @@ import {
 	simpChineseFormal,
 	simpChineseInformal,
 	tradChineseFormal,
-	tradChineseInformal
+	tradChineseInformal,
 } from "../src/index";
 
 const LARGE_UNIT_TABLE = [
@@ -36,7 +36,7 @@ const LARGE_UNIT_TABLE = [
   { trad: "阿僧祇", simp: "阿僧祇", power: 56n },
   { trad: "那由他", simp: "那由他", power: 60n },
   { trad: "不可思議", simp: "不可思议", power: 64n },
-  { trad: "無量大數", simp: "无量大数", power: 68n }
+  { trad: "無量大數", simp: "无量大数", power: 68n },
 ] as const;
 
 function createSeededRng(seed: number): () => number {
@@ -56,7 +56,12 @@ function randomBigInt(rng: () => number, maxDigits: number): bigint {
   return BigInt(value);
 }
 
-function readIntFromEnv(key: string, fallback: number, min: number, max: number): number {
+function readIntFromEnv(
+  key: string,
+  fallback: number,
+  min: number,
+  max: number,
+): number {
   const raw = process.env[key];
   if (!raw) {
     return fallback;
@@ -115,10 +120,18 @@ describe("new numeric capabilities", () => {
   });
 
   it("supports units up to 無量大數", () => {
-    expect(integer.parseInt("一恆河沙", { preferBigInt: true })).toBe(10n ** 52n);
-    expect(integer.parseInt("一恒河沙", { preferBigInt: true })).toBe(10n ** 52n);
-    expect(integer.parseInt("一不可思議", { preferBigInt: true })).toBe(10n ** 64n);
-    expect(integer.parseInt("一無量大數", { preferBigInt: true })).toBe(10n ** 68n);
+    expect(integer.parseInt("一恆河沙", { preferBigInt: true })).toBe(
+      10n ** 52n,
+    );
+    expect(integer.parseInt("一恒河沙", { preferBigInt: true })).toBe(
+      10n ** 52n,
+    );
+    expect(integer.parseInt("一不可思議", { preferBigInt: true })).toBe(
+      10n ** 64n,
+    );
+    expect(integer.parseInt("一無量大數", { preferBigInt: true })).toBe(
+      10n ** 68n,
+    );
     expect(tradChineseFormal.parse(10n ** 68n)).toBe("壹無量大數");
     expect(simpChineseFormal.parse(10n ** 64n)).toBe("壹不可思议");
   });
@@ -130,8 +143,12 @@ describe("new numeric capabilities", () => {
 
     for (const { trad, simp, power } of LARGE_UNIT_TABLE) {
       const expected = 10n ** power;
-      expect(integer.parseInt(`一${trad}`, { preferBigInt: true })).toBe(expected);
-      expect(integer.parseInt(`一${simp}`, { preferBigInt: true })).toBe(expected);
+      expect(integer.parseInt(`一${trad}`, { preferBigInt: true })).toBe(
+        expected,
+      );
+      expect(integer.parseInt(`一${simp}`, { preferBigInt: true })).toBe(
+        expected,
+      );
     }
   });
 
@@ -149,7 +166,9 @@ describe("new numeric capabilities", () => {
 describe("edge cases and error paths", () => {
   it("handles strict mode validation", () => {
     expect(integer.parseInt("一億", { strict: true })).toBe(100000000);
-    expect(() => integer.parseInt("abc", { strict: true })).toThrow(SyntaxError);
+    expect(() => integer.parseInt("abc", { strict: true })).toThrow(
+      SyntaxError,
+    );
   });
 
   it("throws for malformed numeric input", () => {

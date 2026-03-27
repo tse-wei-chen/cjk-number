@@ -1,16 +1,16 @@
 {
   "name": "cjk-number",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "Convert between numbers and CJK number systems",
   "author": "gary2",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/gary2/cjk-number.git"
+    "url": "git+https://github.com/tse-wei-chen/cjk-number.git"
   },
   "bugs": {
-    "url": "https://github.com/gary2/cjk-number/issues"
+    "url": "https://github.com/tse-wei-chen/cjk-number/issues"
   },
-  "homepage": "https://github.com/gary2/cjk-number#readme",
+  "homepage": "https://github.com/tse-wei-chen/cjk-number#readme",
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -39,7 +39,23 @@
   "keywords": [
     "cjk",
     "chinese",
-    "number"
+    "number",
+    "numeral",
+    "number-conversion",
+    "number-parser",
+    "number-formatter",
+    "chinese-numerals",
+    "traditional-chinese",
+    "simplified-chinese",
+    "japanese",
+    "korean",
+    "kanji",
+    "hangul",
+    "hanja",
+    "hiragana",
+    "katakana",
+    "heavenly-stems",
+    "earthly-branches"
   ],
   "license": "MIT",
   "devDependencies": {
