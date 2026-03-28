@@ -296,6 +296,31 @@ describe("korean and japanese sequence systems", () => {
   });
 });
 
+describe("math operations", () => {
+  it("adds multiple cjk strings", () => {
+    expect(tradChineseInformal.add(["一", "二"])).toBe("三");
+    expect(tradChineseInformal.add(["一千", "二十三"])).toBe("一千零二十三");
+    expect(simpChineseFormal.add(["壹仟", "贰拾叁"])).toBe("壹仟零贰拾叁");
+    expect(koreanHangulFormal.add(["일천", "이십삼"])).toBe("일천영이십삼");
+  });
+
+  it("subtracts multiple cjk strings", () => {
+    expect(tradChineseInformal.subtract(["五", "二"])).toBe("三");
+    expect(tradChineseInformal.subtract(["一千", "二十三"])).toBe("九百七十七");
+    expect(tradChineseInformal.subtract(["二", "五"])).toBe("負三");
+  });
+
+  it("multiplies multiple cjk strings", () => {
+    expect(tradChineseInformal.multiply(["二", "三"])).toBe("六");
+    expect(tradChineseInformal.multiply(["一千", "二十三"])).toBe("二萬三千");
+  });
+
+  it("divides multiple cjk strings", () => {
+    expect(tradChineseInformal.divide(["六", "二"])).toBe("三");
+    expect(tradChineseInformal.divide(["一千", "十"])).toBe("一百");
+  });
+});
+
 describe("property-style round trip", () => {
   it("keeps value through format->parse for large random integers", () => {
     const seed = readIntFromEnv("CJK_TEST_SEED", 20260327, 0, 0x7fffffff);

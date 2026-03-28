@@ -1,35 +1,35 @@
 import {
-	CyclicMode,
-	SystemParseOptions,
-	NumberParseOptions,
-	NumberLike,
-	DigitSet,
+  CyclicMode,
+  SystemParseOptions,
+  NumberParseOptions,
+  NumberLike,
+  DigitSet,
 } from "./types.js";
 import {
-	STEMS,
-	BRANCHES,
-	KOREAN_HANGUL_DIGITS,
-	KOREAN_HANJA_FORMAL_DIGITS,
-	KOREAN_HANJA_INFORMAL_DIGITS,
-	JAPANESE_FORMAL_DIGITS,
-	JAPANESE_INFORMAL_DIGITS,
-	HIRAGANA,
-	HIRAGANA_IROHA,
-	KATAKANA,
-	KATAKANA_IROHA,
-	SEQUENCE_SYMBOL_TO_NUMBER,
-	CANONICAL_DIGITS,
-	SMALL_UNITS,
-	BIG_UNIT_ORDER,
-	TRAD_INFORMAL_SET,
-	TRAD_FORMAL_SET,
-	SIMP_INFORMAL_SET,
-	SIMP_FORMAL_SET,
-	KOREAN_HANGUL_SET,
-	KOREAN_HANJA_FORMAL_SET,
-	KOREAN_HANJA_INFORMAL_SET,
-	JAPANESE_FORMAL_SET,
-	JAPANESE_INFORMAL_SET,
+  STEMS,
+  BRANCHES,
+  KOREAN_HANGUL_DIGITS,
+  KOREAN_HANJA_FORMAL_DIGITS,
+  KOREAN_HANJA_INFORMAL_DIGITS,
+  JAPANESE_FORMAL_DIGITS,
+  JAPANESE_INFORMAL_DIGITS,
+  HIRAGANA,
+  HIRAGANA_IROHA,
+  KATAKANA,
+  KATAKANA_IROHA,
+  SEQUENCE_SYMBOL_TO_NUMBER,
+  CANONICAL_DIGITS,
+  SMALL_UNITS,
+  BIG_UNIT_ORDER,
+  TRAD_INFORMAL_SET,
+  TRAD_FORMAL_SET,
+  SIMP_INFORMAL_SET,
+  SIMP_FORMAL_SET,
+  KOREAN_HANGUL_SET,
+  KOREAN_HANJA_FORMAL_SET,
+  KOREAN_HANJA_INFORMAL_SET,
+  JAPANESE_FORMAL_SET,
+  JAPANESE_INFORMAL_SET,
 } from "./constants.js";
 
 export * from "./types.js";
@@ -461,17 +461,82 @@ function parseValue(
 
 function createSystem(set: DigitSet) {
   return {
+    /**
+     * Formats a numeric value into the specific CJK numeral system.
+     *
+     * @param value The number or bigint to format.
+     * @returns The formatted string representation in the respective CJK system.
+     */
     parse(value: NumberLike): string {
       if (typeof value === "number") {
         return formatDecimal(value, set);
       }
       return formatChineseNumber(value, set);
     },
+    /**
+     * Adds multiple CJK numeric strings together.
+     * @param values The CJK numeric strings to add.
+     * @returns The sum of the CJK numeric strings.
+     */
+    add(values: string[]): string {
+      if (values.length === 0) {
+        return set.zero;
+      }
+      const [first, ...rest] = values.map((v) => BigInt(number.parse(v)));
+      const sum = rest.reduce((a, b) => a + b, first);
+      return this.parse(sum);
+    },
+    /**
+     * Subtracts multiple CJK numeric strings from the first one.
+     * @param values The CJK numeric strings to subtract.
+     * @returns The difference of the CJK numeric strings.
+     */
+    subtract(values: string[]): string {
+      if (values.length === 0) {
+        return set.zero;
+      }
+      const [first, ...rest] = values.map((v) => BigInt(number.parse(v)));
+      const diff = rest.reduce((a, b) => a - b, first);
+      return this.parse(diff);
+    },
+    /**
+     * Multiplies multiple CJK numeric strings together.
+     * @param values The CJK numeric strings to multiply.
+     * @returns The product of the CJK numeric strings.
+     */
+    multiply(values: string[]): string {
+      if (values.length === 0) {
+        return set.zero;
+      }
+      const [first, ...rest] = values.map((v) => BigInt(number.parse(v)));
+      const product = rest.reduce((a, b) => a * b, first);
+      return this.parse(product);
+    },
+    /**
+     * Divides multiple CJK numeric strings from the first one.
+     * @param values The CJK numeric strings to divide.
+     * @returns The quotient of the CJK numeric strings.
+     */
+    divide(values: string[]): string {
+      if (values.length === 0) {
+        return set.zero;
+      }
+      const [first, ...rest] = values.map((v) => BigInt(number.parse(v)));
+      const quotient = rest.reduce((a, b) => a / b, first);
+      return this.parse(quotient);
+    },
   };
 }
 
 function createCyclicSystem(chars: readonly string[]) {
   return {
+    /**
+     * Formats a numeric value into the corresponding character of the cyclic sequence.
+     *
+     * @param value The number or bigint to format.
+     * @param options Options defining how to handle sequence boundaries (e.g., 'fixed' or 'cyclic' mode).
+     * @returns The character mapped to the specific sequence position.
+     */
     parse(value: NumberLike, options: SystemParseOptions = {}): string {
       return fromCycle(value, chars, options.mode ?? "fixed");
     },
@@ -479,6 +544,13 @@ function createCyclicSystem(chars: readonly string[]) {
 }
 
 export const number = {
+  /**
+   * Parses a CJK numeric string into a number or bigint.
+   *
+   * @param input The CJK numeric string to parse.
+   * @param options Options defining how to handle the parse (e.g., 'preferBigInt' or 'strict' mode).
+   * @returns The parsed number or bigint.
+   */
   parse(input: string, options?: NumberParseOptions): number | bigint {
     return parseValue(input, options);
   },
