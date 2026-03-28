@@ -2,6 +2,27 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.4.1] - 2026-03-28
+
+### Added
+
+- **Cyclic System Enhancements**: Added `decode`, `next`, `prev`, and `range` methods to all sequence formatters (`cjkHeavenlyStem`, `hiragana`, etc.).
+- **Disambiguation support**: Sequence methods ensure symbols like "ぬ" (shared between Hiragana and Iroha) resolve correctly based on the specific system instance.
+
+### Changed
+
+- **Substantial Performance Optimization**:
+  - Refactored arithmetic core to use an internal binary-decimal format (`ScaledValue`), eliminating redundant string conversions in multi-step operations.
+  - Switched `normalizeInput` to a greedy $O(N)$ Regex-based matcher for faster input processing.
+  - Implemented lazy initialization for large regular expressions and sequence maps to minimize module load time.
+- **Bundle Size Reduction**:
+  - Converted static character arrays (Kana, Stems, Units) to split strings to reduce source boilerplate.
+  - Added `"sideEffects": false` to `package.json` to enable advanced Tree-Shaking in modern bundlers.
+- **Improved Type Safety**:
+  - Replaced `as any` type escapes with a validated `toDigitArray9` helper in `constants.ts`, ensuring internal data integrity.
+- **Whitelisting Audit**:
+  - Expanded `strict: true` mode to support missing Heavenly Stems, Earthly Branches, and Japanese variants (`弍`, `穣`, `恆`, etc.).
+
 ## [0.4.0] - 2026-03-28
 
 ### Breaking Changes

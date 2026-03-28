@@ -17,7 +17,7 @@ import {
   HIRAGANA_IROHA,
   KATAKANA,
   KATAKANA_IROHA,
-  SEQUENCE_SYMBOL_TO_NUMBER,
+  getSequenceMap,
   CANONICAL_DIGITS,
   SMALL_UNITS,
   BIG_UNIT_ORDER,
@@ -30,6 +30,7 @@ import {
   KOREAN_HANJA_INFORMAL_SET,
   JAPANESE_FORMAL_SET,
   JAPANESE_INFORMAL_SET,
+  ScaledValue,
 } from "./constants.js";
 
 export * from "./types.js";
@@ -90,34 +91,19 @@ const NORMALIZE_KEYS = Object.keys(NORMALIZE_MAP).sort(
   (a, b) => b.length - a.length,
 );
 
+let normalizeRegex: RegExp | undefined;
+
 function normalizeInput(raw: string): string {
   const trimmed = raw.trim();
   if (!trimmed) {
     throw new SyntaxError("Empty string is not a valid number");
   }
 
-  let result = "";
-  let i = 0;
-
-  while (i < trimmed.length) {
-    let matched = false;
-
-    for (const key of NORMALIZE_KEYS) {
-      if (trimmed.startsWith(key, i)) {
-        result += NORMALIZE_MAP[key];
-        i += key.length;
-        matched = true;
-        break;
-      }
-    }
-
-    if (!matched) {
-      result += trimmed[i];
-      i += 1;
-    }
+  if (!normalizeRegex) {
+    normalizeRegex = new RegExp(NORMALIZE_KEYS.join("|"), "g");
   }
 
-  return result;
+  return trimmed.replace(normalizeRegex, (matched) => NORMALIZE_MAP[matched]);
 }
 
 function toBigInt(value: NumberLike): bigint {
@@ -245,10 +231,14 @@ function toBestNumeric(value: bigint, preferBigInt: boolean): number | bigint {
   return Number(value);
 }
 
+let allowedRegex: RegExp | undefined;
+
 function validateStrictCharacters(input: string): void {
-  const allowed =
-    /^[0-9零〇○一二三四五六七八九十百千萬万億亿兆京垓秭穰溝沟澗涧正載载極极恆恒河沙阿僧祇那由他不思議议可無无量大數数點点점壹貳贰參叁肆伍陸陆柒捌玖兩两拾佰仟負负壱弐参ぁ-ゟ゠-ヿ가-힣.-]+$/;
-  if (!allowed.test(input)) {
+  if (!allowedRegex) {
+    allowedRegex =
+      /^[0-9零〇○一二三四五六七八九十百千萬万億亿兆京垓秭穰穣溝沟澗涧正載载極极恆恒河沙阿僧祇那由他不思議议可無无量大數数點点점壹貳贰參叁肆伍陸陆柒捌玖兩两拾佰仟負负壱弍弐参甲乙丙丁戊己庚辛壬癸子丑寅卯辰巳午未申酉戌亥ぁ-ゟ゠-ヿ가-힣.-]+$/;
+  }
+  if (!allowedRegex.test(input)) {
     throw new SyntaxError(
       "Input contains unsupported characters in strict mode",
     );
@@ -434,7 +424,7 @@ function parseValue(
   // Handle other explicit numeric systems by validating characters?
   // Or just fall through if not a sequence symbol.
 
-  const sequenceValue = SEQUENCE_SYMBOL_TO_NUMBER[input];
+  const sequenceValue = getSequenceMap()[input];
   if (sequenceValue !== undefined) {
     return sequenceValue;
   }
@@ -478,89 +468,59 @@ function parseValue(
   return toBestNumeric(signed, options.mode === "preferBigInt");
 }
 
-function toScaleFormat(val: NumberLike) {
+function toScaled(val: NumberLike): ScaledValue {
+  if (typeof val === "bigint") return { big: val, scale: 0 };
   const str = String(val);
+  const dotIndex = str.indexOf(".");
+  if (dotIndex < 0) return { big: BigInt(str), scale: 0 };
+
+  const intPart = str.slice(0, dotIndex);
+  const fracPart = str.slice(dotIndex + 1);
   const isNeg = str.startsWith("-");
-  const abs = isNeg ? str.slice(1) : str;
-  const parts = abs.split(".");
-  return {
-    intPart: parts[0] || "0",
-    fracPart: parts[1] || "",
-    isNeg,
-  };
+  const cleanInt = isNeg ? intPart.slice(1) : intPart;
+  const big = BigInt(cleanInt + fracPart) * (isNeg ? -1n : 1n);
+  return { big, scale: fracPart.length };
 }
 
-function alignScales(a: NumberLike, b: NumberLike) {
-  const parsedA = toScaleFormat(a);
-  const parsedB = toScaleFormat(b);
-  const maxDec = Math.max(parsedA.fracPart.length, parsedB.fracPart.length);
-
-  const strA = parsedA.intPart + parsedA.fracPart.padEnd(maxDec, "0");
-  const strB = parsedB.intPart + parsedB.fracPart.padEnd(maxDec, "0");
-
-  const bigA = BigInt(strA) * (parsedA.isNeg ? -1n : 1n);
-  const bigB = BigInt(strB) * (parsedB.isNeg ? -1n : 1n);
-
-  return { bigA, bigB, scale: maxDec };
+function fromScaled(val: ScaledValue): NumberLike {
+  if (val.scale === 0) return val.big;
+  let str = (val.big < 0n ? -val.big : val.big).toString();
+  str = str.padStart(val.scale + 1, "0");
+  const intPart = str.slice(0, -val.scale);
+  const fracPart = str.slice(-val.scale).replace(/0+$/, "");
+  const res = fracPart ? `${intPart || "0"}.${fracPart}` : (intPart || "0");
+  return (val.big < 0n ? "-" : "") + res;
 }
 
-function applyScale(val: bigint, scale: number): string {
-  let str = (val < 0n ? -val : val).toString();
-  if (scale === 0) return (val < 0n ? "-" : "") + str;
-
-  str = str.padStart(scale + 1, "0");
-  const intPart = str.slice(0, -scale);
-  const fracPart = str.slice(-scale).replace(/0+$/, "");
-
-  const joined = fracPart ? `${intPart || "0"}.${fracPart}` : (intPart || "0");
-  return (val < 0n ? "-" : "") + joined;
+function align(a: ScaledValue, b: ScaledValue): { a: bigint; b: bigint; scale: number } {
+  const maxScale = Math.max(a.scale, b.scale);
+  const bigA = a.big * 10n ** BigInt(maxScale - a.scale);
+  const bigB = b.big * 10n ** BigInt(maxScale - b.scale);
+  return { a: bigA, b: bigB, scale: maxScale };
 }
 
-function mixedAdd(a: NumberLike, b: NumberLike): NumberLike {
-  const { bigA, bigB, scale } = alignScales(a, b);
-  return applyScale(bigA + bigB, scale);
-}
-
-function mixedSubtract(a: NumberLike, b: NumberLike): NumberLike {
-  const { bigA, bigB, scale } = alignScales(a, b);
-  return applyScale(bigA - bigB, scale);
-}
-
-function mixedMultiply(a: NumberLike, b: NumberLike): NumberLike {
-  const { bigA, bigB, scale } = alignScales(a, b);
-  return applyScale(bigA * bigB, scale * 2);
-}
-
-function mixedDivide(a: NumberLike, b: NumberLike): NumberLike {
-  const { bigA, bigB } = alignScales(a, b);
-  if (bigB === 0n) throw new RangeError("Division by zero");
-  
-  const EXTRA = 16n;
-  const result = (bigA * (10n ** EXTRA)) / bigB;
-  return applyScale(result, Number(EXTRA));
-}
 
 function mixedModulo(a: NumberLike, b: NumberLike): NumberLike {
-  const { bigA, bigB, scale } = alignScales(a, b);
-  return applyScale(bigA % bigB, scale);
+  const scaledA = toScaled(a);
+  const scaledB = toScaled(b);
+  const { a: bigA, b: bigB, scale } = align(scaledA, scaledB);
+  return fromScaled({ big: bigA % bigB, scale });
 }
 
 function mixedPow(base: NumberLike, exponent: NumberLike): NumberLike {
-  const parsedExp = toScaleFormat(exponent);
-  if (parsedExp.fracPart.length > 0) return Number(base) ** Number(exponent);
-  const expNum = BigInt(parsedExp.intPart) * (parsedExp.isNeg ? -1n : 1n);
+  const scaledExp = toScaled(exponent);
+  if (scaledExp.scale > 0) return Number(base) ** Number(exponent);
+  const expNum = scaledExp.big;
   if (expNum < 0n) return Number(base) ** Number(exponent);
 
-  const parsedBase = toScaleFormat(base);
-  const baseBig = BigInt(parsedBase.intPart + parsedBase.fracPart);
-  const scale = parsedBase.fracPart.length * Number(expNum);
-  
-  const result = baseBig ** expNum;
-  return applyScale(parsedBase.isNeg && expNum % 2n !== 0n ? -result : result, scale);
+  const scaledBase = toScaled(base);
+  const resScale = Number(BigInt(scaledBase.scale) * expNum);
+  const resBig = scaledBase.big ** expNum;
+  return fromScaled({ big: resBig, scale: resScale });
 }
 
 function mixedCompare(a: NumberLike, b: NumberLike): number {
-  const { bigA, bigB } = alignScales(a, b);
+  const { a: bigA, b: bigB } = align(toScaled(a), toScaled(b));
   return bigA > bigB ? 1 : bigA < bigB ? -1 : 0;
 }
 
@@ -584,12 +544,14 @@ function createSystem(set: DigitSet) {
      * @returns The sum of the CJK numeric strings.
      */
     add(values: string[]): string {
-      if (values.length === 0) {
-        return set.zero;
+      if (values.length === 0) return set.zero;
+      let acc = toScaled(number.parse(values[0]));
+      for (let i = 1; i < values.length; i++) {
+        const next = toScaled(number.parse(values[i]));
+        const aligned = align(acc, next);
+        acc = { big: aligned.a + aligned.b, scale: aligned.scale };
       }
-      const [first, ...rest] = values.map((v) => number.parse(v));
-      const sum = rest.reduce(mixedAdd, first);
-      return this.parse(sum);
+      return this.parse(fromScaled(acc));
     },
     /**
      * Subtracts multiple CJK numeric strings from the first one.
@@ -597,12 +559,14 @@ function createSystem(set: DigitSet) {
      * @returns The difference of the CJK numeric strings.
      */
     subtract(values: string[]): string {
-      if (values.length === 0) {
-        return set.zero;
+      if (values.length === 0) return set.zero;
+      let acc = toScaled(number.parse(values[0]));
+      for (let i = 1; i < values.length; i++) {
+        const next = toScaled(number.parse(values[i]));
+        const aligned = align(acc, next);
+        acc = { big: aligned.a - aligned.b, scale: aligned.scale };
       }
-      const [first, ...rest] = values.map((v) => number.parse(v));
-      const diff = rest.reduce(mixedSubtract, first);
-      return this.parse(diff);
+      return this.parse(fromScaled(acc));
     },
     /**
      * Multiplies multiple CJK numeric strings together.
@@ -610,12 +574,13 @@ function createSystem(set: DigitSet) {
      * @returns The product of the CJK numeric strings.
      */
     multiply(values: string[]): string {
-      if (values.length === 0) {
-        return set.zero;
+      if (values.length === 0) return set.zero;
+      let acc = toScaled(number.parse(values[0]));
+      for (let i = 1; i < values.length; i++) {
+        const next = toScaled(number.parse(values[i]));
+        acc = { big: acc.big * next.big, scale: acc.scale + next.scale };
       }
-      const [first, ...rest] = values.map((v) => number.parse(v));
-      const product = rest.reduce(mixedMultiply, first);
-      return this.parse(product);
+      return this.parse(fromScaled(acc));
     },
     /**
      * Divides multiple CJK numeric strings from the first one.
@@ -623,12 +588,19 @@ function createSystem(set: DigitSet) {
      * @returns The quotient of the CJK numeric strings.
      */
     divide(values: string[]): string {
-      if (values.length === 0) {
-        return set.zero;
+      if (values.length === 0) return set.zero;
+      let acc = toScaled(number.parse(values[0]));
+      const EXTRA = 16n;
+      for (let i = 1; i < values.length; i++) {
+        const next = toScaled(number.parse(values[i]));
+        if (next.big === 0n) throw new RangeError("Division by zero");
+        const aligned = align(acc, next);
+        acc = {
+          big: (aligned.a * 10n ** EXTRA) / aligned.b,
+          scale: Number(EXTRA),
+        };
       }
-      const [first, ...rest] = values.map((v) => number.parse(v));
-      const quotient = rest.reduce(mixedDivide, first);
-      return this.parse(quotient);
+      return this.parse(fromScaled(acc));
     },
     /**
      * Calculates the remainder of the first string divided by the second.
@@ -682,6 +654,57 @@ function createCyclicSystem(chars: readonly string[]) {
      */
     parse(value: NumberLike, options: SystemParseOptions = {}): string {
       return fromCycle(value, chars, options.mode ?? "fixed");
+    },
+    /**
+     * Parses a single sequence symbol into its numeric position (1-based index).
+     * This is system-specific, so "ぬ" resolves to 23 in hiragana but 10 in hiraganaIroha.
+     * @param symbol The sequence symbol to decode.
+     * @returns The 1-based index of the symbol in the sequence.
+     */
+    decode(symbol: string): number {
+      const index = (chars as readonly string[]).indexOf(symbol);
+      if (index < 0) {
+        throw new SyntaxError(`Symbol "${symbol}" is not part of this system`);
+      }
+      return index + 1;
+    },
+    /**
+     * Returns the character at a specific distance after the given symbol (wraps around).
+     * @param symbol The starting symbol.
+     * @param step The number of positions to move forward.
+     * @returns The resulting sequence character.
+     */
+    next(symbol: string, step: number | bigint = 1n): string {
+      const current = this.decode(symbol);
+      return this.parse(BigInt(current) + BigInt(step), { mode: "cyclic" });
+    },
+    /**
+     * Returns the character at a specific distance before the given symbol (wraps around).
+     * @param symbol The starting symbol.
+     * @param step The number of positions to move backward.
+     * @returns The resulting sequence character.
+     */
+    prev(symbol: string, step: number | bigint = 1n): string {
+      const current = this.decode(symbol);
+      return this.parse(BigInt(current) - BigInt(step), { mode: "cyclic" });
+    },
+    /**
+     * Returns an array of symbols between the start and end (inclusive).
+     * Follows the cyclic order if the start index is greater than the end index.
+     * @param start The starting symbol.
+     * @param end The ending symbol.
+     * @returns A list of symbols in the sequence.
+     */
+    range(start: string, end: string): string[] {
+      const iStart = this.decode(start) - 1;
+      const iEnd = this.decode(end) - 1;
+      if (iStart <= iEnd) {
+        return (chars as string[]).slice(iStart, iEnd + 1);
+      }
+      return [
+        ...(chars as string[]).slice(iStart),
+        ...(chars as string[]).slice(0, iEnd + 1),
+      ];
     },
   };
 }

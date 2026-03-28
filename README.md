@@ -138,6 +138,7 @@ tradChineseInformal.compare("三十", "二"); // 1
 
 All arithmetic uses a **zero-dependency BigFloat engine**: decimal points are scaled out to `BigInt` before any operation, so results like `"一兆" + "一點五"` are exact with no floating-point drift.
 
+
 Available formatters:
 
 - cjkIdeographic
@@ -156,6 +157,26 @@ Available formatters:
 - hiraganaIroha
 - katakana
 - katakanaIroha
+
+#### Sequence system methods
+
+All sequence systems (stems, branches, and kana) also expose methods for traversing and decoding the sequence:
+
+- `decode(symbol)`: Returns the 1-indexed numeric value of a symbol in the specific sequence.
+- `next(symbol, count?)`: Returns the next symbol in the sequence (cyclic).
+- `prev(symbol, count?)`: Returns the previous symbol in the sequence (cyclic).
+- `range(start, end)`: Returns an array of symbols from `start` to `end` (inclusive).
+
+Example:
+
+```js
+hiraganaIroha.decode("ぬ"); // 10
+hiragana.decode("ぬ"); // 23 (gojuon)
+
+cjkHeavenlyStem.next("癸"); // "甲"
+cjkEarthlyBranch.prev("子", 2); // "戌"
+hiraganaIroha.range("ゑ", "す"); // ["ゑ", "ひ", "も", "せ", "す"]
+```
 
 Examples:
 
