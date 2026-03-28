@@ -1,532 +1,93 @@
-export type CyclicMode = "fixed" | "cyclic";
+import {
+	CyclicMode,
+	SystemParseOptions,
+	NumberParseOptions,
+	NumberLike,
+	DigitSet,
+} from "./types.js";
+import {
+	STEMS,
+	BRANCHES,
+	KOREAN_HANGUL_DIGITS,
+	KOREAN_HANJA_FORMAL_DIGITS,
+	KOREAN_HANJA_INFORMAL_DIGITS,
+	JAPANESE_FORMAL_DIGITS,
+	JAPANESE_INFORMAL_DIGITS,
+	HIRAGANA,
+	HIRAGANA_IROHA,
+	KATAKANA,
+	KATAKANA_IROHA,
+	SEQUENCE_SYMBOL_TO_NUMBER,
+	CANONICAL_DIGITS,
+	SMALL_UNITS,
+	BIG_UNIT_ORDER,
+	TRAD_INFORMAL_SET,
+	TRAD_FORMAL_SET,
+	SIMP_INFORMAL_SET,
+	SIMP_FORMAL_SET,
+	KOREAN_HANGUL_SET,
+	KOREAN_HANJA_FORMAL_SET,
+	KOREAN_HANJA_INFORMAL_SET,
+	JAPANESE_FORMAL_SET,
+	JAPANESE_INFORMAL_SET,
+} from "./constants.js";
 
-export interface SystemParseOptions {
-  mode?: CyclicMode;
-}
+export * from "./types.js";
 
-export interface IntegerParseOptions {
-  strict?: boolean;
-  preferBigInt?: boolean;
-  heavenlyStemMode?: CyclicMode;
-  earthlyBranchMode?: CyclicMode;
-}
-
-type IntegerLike = number | bigint;
-
-interface DigitSet {
-  zero: string;
-  point: string;
-  digits: [
-    string,
-    string,
-    string,
-    string,
-    string,
-    string,
-    string,
-    string,
-    string,
-  ];
-  smallUnits: [string, string, string];
-  bigUnits: string[];
-}
-
-const STEMS = [
-  "甲",
-  "乙",
-  "丙",
-  "丁",
-  "戊",
-  "己",
-  "庚",
-  "辛",
-  "壬",
-  "癸",
-] as const;
-const BRANCHES = [
-  "子",
-  "丑",
-  "寅",
-  "卯",
-  "辰",
-  "巳",
-  "午",
-  "未",
-  "申",
-  "酉",
-  "戌",
-  "亥",
-] as const;
-const KOREAN_HANGUL_DIGITS = [
-  "일",
-  "이",
-  "삼",
-  "사",
-  "오",
-  "육",
-  "칠",
-  "팔",
-  "구",
-] as const;
-const KOREAN_HANJA_FORMAL_DIGITS = [
-  "壹",
-  "貳",
-  "參",
-  "四",
-  "五",
-  "六",
-  "七",
-  "八",
-  "九",
-] as const;
-const KOREAN_HANJA_INFORMAL_DIGITS = [
-  "一",
-  "二",
-  "三",
-  "四",
-  "五",
-  "六",
-  "七",
-  "八",
-  "九",
-] as const;
-const JAPANESE_FORMAL_DIGITS = [
-  "壱",
-  "弐",
-  "参",
-  "四",
-  "五",
-  "六",
-  "七",
-  "八",
-  "九",
-] as const;
-const JAPANESE_INFORMAL_DIGITS = [
-  "一",
-  "二",
-  "三",
-  "四",
-  "五",
-  "六",
-  "七",
-  "八",
-  "九",
-] as const;
-const HIRAGANA = [
-  "あ",
-  "い",
-  "う",
-  "え",
-  "お",
-  "か",
-  "き",
-  "く",
-  "け",
-  "こ",
-  "さ",
-  "し",
-  "す",
-  "せ",
-  "そ",
-  "た",
-  "ち",
-  "つ",
-  "て",
-  "と",
-  "な",
-  "に",
-  "ぬ",
-  "ね",
-  "の",
-  "は",
-  "ひ",
-  "ふ",
-  "へ",
-  "ほ",
-  "ま",
-  "み",
-  "む",
-  "め",
-  "も",
-  "や",
-  "ゆ",
-  "よ",
-  "ら",
-  "り",
-  "る",
-  "れ",
-  "ろ",
-  "わ",
-  "を",
-  "ん",
-] as const;
-const HIRAGANA_IROHA = [
-  "い",
-  "ろ",
-  "は",
-  "に",
-  "ほ",
-  "へ",
-  "と",
-  "ち",
-  "り",
-  "ぬ",
-  "る",
-  "を",
-  "わ",
-  "か",
-  "よ",
-  "た",
-  "れ",
-  "そ",
-  "つ",
-  "ね",
-  "な",
-  "ら",
-  "む",
-  "う",
-  "ゐ",
-  "の",
-  "お",
-  "く",
-  "や",
-  "ま",
-  "け",
-  "ふ",
-  "こ",
-  "え",
-  "て",
-  "あ",
-  "さ",
-  "き",
-  "ゆ",
-  "め",
-  "み",
-  "し",
-  "ゑ",
-  "ひ",
-  "も",
-  "せ",
-  "す",
-] as const;
-const KATAKANA = [
-  "ア",
-  "イ",
-  "ウ",
-  "エ",
-  "オ",
-  "カ",
-  "キ",
-  "ク",
-  "ケ",
-  "コ",
-  "サ",
-  "シ",
-  "ス",
-  "セ",
-  "ソ",
-  "タ",
-  "チ",
-  "ツ",
-  "テ",
-  "ト",
-  "ナ",
-  "ニ",
-  "ヌ",
-  "ネ",
-  "ノ",
-  "ハ",
-  "ヒ",
-  "フ",
-  "ヘ",
-  "ホ",
-  "マ",
-  "ミ",
-  "ム",
-  "メ",
-  "モ",
-  "ヤ",
-  "ユ",
-  "ヨ",
-  "ラ",
-  "リ",
-  "ル",
-  "レ",
-  "ロ",
-  "ワ",
-  "ヲ",
-  "ン",
-] as const;
-const KATAKANA_IROHA = [
-  "イ",
-  "ロ",
-  "ハ",
-  "ニ",
-  "ホ",
-  "ヘ",
-  "ト",
-  "チ",
-  "リ",
-  "ヌ",
-  "ル",
-  "ヲ",
-  "ワ",
-  "カ",
-  "ヨ",
-  "タ",
-  "レ",
-  "ソ",
-  "ツ",
-  "ネ",
-  "ナ",
-  "ラ",
-  "ム",
-  "ウ",
-  "ヰ",
-  "ノ",
-  "オ",
-  "ク",
-  "ヤ",
-  "マ",
-  "ケ",
-  "フ",
-  "コ",
-  "エ",
-  "テ",
-  "ア",
-  "サ",
-  "キ",
-  "ユ",
-  "メ",
-  "ミ",
-  "シ",
-  "ヱ",
-  "ヒ",
-  "モ",
-  "セ",
-  "ス",
-] as const;
-
-const KOREAN_BIG_UNITS = [
-  "만",
-  "억",
-  "조",
-  "경",
-  "해",
-  "자",
-  "양",
-  "구",
-  "간",
-  "정",
-  "재",
-  "극",
-  "항하사",
-  "아승기",
-  "나유타",
-  "불가사의",
-  "무량대수",
-] as const;
-
-const JAPANESE_BIG_UNITS = [
-  "万",
-  "億",
-  "兆",
-  "京",
-  "垓",
-  "秭",
-  "穣",
-  "溝",
-  "澗",
-  "正",
-  "載",
-  "極",
-  "恒河沙",
-  "阿僧祇",
-  "那由他",
-  "不可思議",
-  "無量大数",
-] as const;
-
-const SEQUENCE_SYMBOL_TO_NUMBER: Record<string, number> = (() => {
-  const map: Record<string, number> = {};
-  const put = (chars: readonly string[]) => {
-    chars.forEach((char, index) => {
-      map[char] = index + 1;
-    });
-  };
-
-  put(STEMS);
-  put(BRANCHES);
-  put(HIRAGANA);
-  put(HIRAGANA_IROHA);
-  put(KATAKANA);
-  put(KATAKANA_IROHA);
-
-  return map;
-})();
-
-const CANONICAL_DIGITS: Record<string, number> = {
-  零: 0,
-  영: 0,
-  령: 0,
-  〇: 0,
-  "○": 0,
-  一: 1,
-  壹: 1,
-  二: 2,
-  貳: 2,
-  贰: 2,
-  兩: 2,
-  两: 2,
-  三: 3,
-  參: 3,
-  叁: 3,
-  四: 4,
-  肆: 4,
-  五: 5,
-  伍: 5,
-  六: 6,
-  陸: 6,
-  陆: 6,
-  七: 7,
-  柒: 7,
-  八: 8,
-  捌: 8,
-  九: 9,
-  玖: 9,
+const NORMALIZE_MAP: Record<string, string> = {
+  負: "-",
+  负: "-",
+  점: ".",
+  點: ".",
+  点: ".",
+  무량대수: "无量大数",
+  불가사의: "不可思议",
+  나유타: "那由他",
+  아승기: "阿僧祇",
+  항하사: "恒河沙",
+  재: "载",
+  정: "正",
+  간: "涧",
+  양: "穰",
+  자: "秭",
+  해: "垓",
+  경: "京",
+  조: "兆",
+  억: "亿",
+  만: "万",
+  천: "千",
+  백: "百",
+  십: "十",
+  일: "一",
+  이: "二",
+  삼: "三",
+  사: "四",
+  오: "五",
+  육: "六",
+  칠: "七",
+  팔: "八",
+  구: "九",
+  壱: "一",
+  弐: "二",
+  参: "三",
+  無量大數: "无量大数",
+  無量大数: "无量大数",
+  不可思議: "不可思议",
+  穣: "穰",
+  恆河沙: "恒河沙",
+  載: "载",
+  極: "极",
+  溝: "沟",
+  澗: "涧",
+  億: "亿",
+  萬: "万",
+  拾: "十",
+  佰: "百",
+  仟: "千",
 };
-
-const SMALL_UNITS: Record<string, bigint> = {
-  十: 10n,
-  拾: 10n,
-  百: 100n,
-  佰: 100n,
-  千: 1000n,
-  仟: 1000n,
-};
-
-const TRAD_BIG_UNITS = [
-  "萬",
-  "億",
-  "兆",
-  "京",
-  "垓",
-  "秭",
-  "穰",
-  "溝",
-  "澗",
-  "正",
-  "載",
-  "極",
-  "恆河沙",
-  "阿僧祇",
-  "那由他",
-  "不可思議",
-  "無量大數",
-] as const;
-
-const SIMP_BIG_UNITS = [
-  "万",
-  "亿",
-  "兆",
-  "京",
-  "垓",
-  "秭",
-  "穰",
-  "沟",
-  "涧",
-  "正",
-  "载",
-  "极",
-  "恒河沙",
-  "阿僧祇",
-  "那由他",
-  "不可思议",
-  "无量大数",
-] as const;
-
-function createBigUnitOrder(units: readonly string[]): Array<[string, bigint]> {
-  return units
-    .map(
-      (unit, index) =>
-        [unit, 10n ** BigInt((index + 1) * 4)] as [string, bigint],
-    )
-    .reverse();
-}
-
-const TRAD_INFORMAL_SET: DigitSet = {
-  zero: "零",
-  point: "點",
-  digits: ["一", "二", "三", "四", "五", "六", "七", "八", "九"],
-  smallUnits: ["十", "百", "千"],
-  bigUnits: [...TRAD_BIG_UNITS],
-};
-
-const TRAD_FORMAL_SET: DigitSet = {
-  zero: "零",
-  point: "點",
-  digits: ["壹", "貳", "參", "肆", "伍", "陸", "柒", "捌", "玖"],
-  smallUnits: ["拾", "佰", "仟"],
-  bigUnits: [...TRAD_BIG_UNITS],
-};
-
-const SIMP_INFORMAL_SET: DigitSet = {
-  zero: "零",
-  point: "点",
-  digits: ["一", "二", "三", "四", "五", "六", "七", "八", "九"],
-  smallUnits: ["十", "百", "千"],
-  bigUnits: [...SIMP_BIG_UNITS],
-};
-
-const SIMP_FORMAL_SET: DigitSet = {
-  zero: "零",
-  point: "点",
-  digits: ["壹", "贰", "叁", "肆", "伍", "陆", "柒", "捌", "玖"],
-  smallUnits: ["拾", "佰", "仟"],
-  bigUnits: [...SIMP_BIG_UNITS],
-};
-
-const KOREAN_HANGUL_SET: DigitSet = {
-  zero: "영",
-  point: "점",
-  digits: [...KOREAN_HANGUL_DIGITS],
-  smallUnits: ["십", "백", "천"],
-  bigUnits: [...KOREAN_BIG_UNITS],
-};
-
-const KOREAN_HANJA_FORMAL_SET: DigitSet = {
-  zero: "零",
-  point: "점",
-  digits: [...KOREAN_HANJA_FORMAL_DIGITS],
-  smallUnits: ["拾", "佰", "仟"],
-  bigUnits: [...TRAD_BIG_UNITS],
-};
-
-const KOREAN_HANJA_INFORMAL_SET: DigitSet = {
-  zero: "零",
-  point: "점",
-  digits: [...KOREAN_HANJA_INFORMAL_DIGITS],
-  smallUnits: ["十", "百", "千"],
-  bigUnits: [...TRAD_BIG_UNITS],
-};
-
-const JAPANESE_FORMAL_SET: DigitSet = {
-  zero: "零",
-  point: "点",
-  digits: [...JAPANESE_FORMAL_DIGITS],
-  smallUnits: ["拾", "百", "千"],
-  bigUnits: [...JAPANESE_BIG_UNITS],
-};
-
-const JAPANESE_INFORMAL_SET: DigitSet = {
-  zero: "零",
-  point: "点",
-  digits: [...JAPANESE_INFORMAL_DIGITS],
-  smallUnits: ["十", "百", "千"],
-  bigUnits: [...JAPANESE_BIG_UNITS],
-};
-
-const BIG_UNIT_ORDER = createBigUnitOrder(SIMP_BIG_UNITS);
+const NORMALIZE_KEYS = Object.keys(NORMALIZE_MAP).sort(
+  (a, b) => b.length - a.length,
+);
 
 function normalizeInput(raw: string): string {
   const trimmed = raw.trim();
@@ -534,58 +95,31 @@ function normalizeInput(raw: string): string {
     throw new SyntaxError("Empty string is not a valid number");
   }
 
-  return trimmed
-    .replace(/負|负/g, "-")
-    .replace(/점/g, ".")
-    .replace(/點|点/g, ".")
-    .replace(/무량대수/g, "无量大数")
-    .replace(/불가사의/g, "不可思议")
-    .replace(/나유타/g, "那由他")
-    .replace(/아승기/g, "阿僧祇")
-    .replace(/항하사/g, "恒河沙")
-    .replace(/재/g, "载")
-    .replace(/정/g, "正")
-    .replace(/간/g, "涧")
-    .replace(/구/g, "沟")
-    .replace(/양/g, "穰")
-    .replace(/자/g, "秭")
-    .replace(/해/g, "垓")
-    .replace(/경/g, "京")
-    .replace(/조/g, "兆")
-    .replace(/억/g, "亿")
-    .replace(/만/g, "万")
-    .replace(/천/g, "千")
-    .replace(/백/g, "百")
-    .replace(/십/g, "十")
-    .replace(/일/g, "一")
-    .replace(/이/g, "二")
-    .replace(/삼/g, "三")
-    .replace(/사/g, "四")
-    .replace(/오/g, "五")
-    .replace(/육/g, "六")
-    .replace(/칠/g, "七")
-    .replace(/팔/g, "八")
-    .replace(/구/g, "九")
-    .replace(/壱/g, "一")
-    .replace(/弐/g, "二")
-    .replace(/参/g, "三")
-    .replace(/無量大數/g, "无量大数")
-    .replace(/無量大数/g, "无量大数")
-    .replace(/不可思議/g, "不可思议")
-    .replace(/穣/g, "穰")
-    .replace(/恆河沙/g, "恒河沙")
-    .replace(/載/g, "载")
-    .replace(/極/g, "极")
-    .replace(/溝/g, "沟")
-    .replace(/澗/g, "涧")
-    .replace(/億/g, "亿")
-    .replace(/萬/g, "万")
-    .replace(/拾/g, "十")
-    .replace(/佰/g, "百")
-    .replace(/仟/g, "千");
+  let result = "";
+  let i = 0;
+
+  while (i < trimmed.length) {
+    let matched = false;
+
+    for (const key of NORMALIZE_KEYS) {
+      if (trimmed.startsWith(key, i)) {
+        result += NORMALIZE_MAP[key];
+        i += key.length;
+        matched = true;
+        break;
+      }
+    }
+
+    if (!matched) {
+      result += trimmed[i];
+      i += 1;
+    }
+  }
+
+  return result;
 }
 
-function toBigInt(value: IntegerLike): bigint {
+function toBigInt(value: NumberLike): bigint {
   if (typeof value === "bigint") {
     return value;
   }
@@ -648,7 +182,7 @@ function parseSection(section: string): bigint {
   return total;
 }
 
-function parseChineseInteger(raw: string): bigint {
+function parseChineseNumber(raw: string): bigint {
   if (/^[0-9]+$/.test(raw)) {
     return BigInt(raw);
   }
@@ -722,7 +256,7 @@ function validateStrictCharacters(input: string): void {
 }
 
 function fromCycle(
-  value: IntegerLike,
+  value: NumberLike,
   chars: readonly string[],
   mode: CyclicMode,
 ): string {
@@ -795,7 +329,7 @@ function formatSection(section: number, set: DigitSet): string {
   return output;
 }
 
-function formatChineseInteger(value: IntegerLike, set: DigitSet): string {
+function formatChineseNumber(value: NumberLike, set: DigitSet): string {
   const raw = toBigInt(value);
   if (raw === 0n) {
     return set.zero;
@@ -846,7 +380,7 @@ function formatDecimal(value: number, set: DigitSet): string {
   }
 
   if (Number.isInteger(value)) {
-    return formatChineseInteger(value, set);
+    return formatChineseNumber(value, set);
   }
 
   const negative = value < 0;
@@ -854,10 +388,10 @@ function formatDecimal(value: number, set: DigitSet): string {
   const [intPart, fracPart] = source.split(".");
 
   if (!fracPart) {
-    return formatChineseInteger(value, set);
+    return formatChineseNumber(value, set);
   }
 
-  const intText = formatChineseInteger(BigInt(intPart), set);
+  const intText = formatChineseNumber(BigInt(intPart), set);
   let fracText = "";
 
   for (const ch of fracPart) {
@@ -871,7 +405,7 @@ function formatDecimal(value: number, set: DigitSet): string {
 
 function parseValue(
   input: string,
-  options: IntegerParseOptions = {},
+  options: NumberParseOptions = {},
 ): number | bigint {
   const modeStem = options.heavenlyStemMode ?? "fixed";
   const modeBranch = options.earthlyBranchMode ?? "fixed";
@@ -907,7 +441,7 @@ function parseValue(
 
   if (body.includes(".")) {
     const [intRaw, fracRaw = ""] = body.split(".");
-    const intValue = intRaw ? parseChineseInteger(intRaw) : 0n;
+    const intValue = intRaw ? parseChineseNumber(intRaw) : 0n;
     const fracValue = parseFractionDigits(fracRaw);
 
     if (intValue > BigInt(Number.MAX_SAFE_INTEGER)) {
@@ -920,142 +454,53 @@ function parseValue(
     return negative ? -composed : composed;
   }
 
-  const parsed = parseChineseInteger(body);
+  const parsed = parseChineseNumber(body);
   const signed = negative ? -parsed : parsed;
   return toBestNumeric(signed, options.preferBigInt ?? false);
 }
 
-export const integer = {
-  parseInt(input: string, options?: IntegerParseOptions): number | bigint {
+function createSystem(set: DigitSet) {
+  return {
+    parse(value: NumberLike): string {
+      if (typeof value === "number") {
+        return formatDecimal(value, set);
+      }
+      return formatChineseNumber(value, set);
+    },
+  };
+}
+
+function createCyclicSystem(chars: readonly string[]) {
+  return {
+    parse(value: NumberLike, options: SystemParseOptions = {}): string {
+      return fromCycle(value, chars, options.mode ?? "fixed");
+    },
+  };
+}
+
+export const number = {
+  parse(input: string, options?: NumberParseOptions): number | bigint {
     return parseValue(input, options);
   },
 };
 
-export const cjkIdeographic = {
-  parse(value: IntegerLike): string {
-    if (typeof value === "number") {
-      return formatDecimal(value, TRAD_INFORMAL_SET);
-    }
-    return formatChineseInteger(value, TRAD_INFORMAL_SET);
-  },
-};
+export const cjkIdeographic = createSystem(TRAD_INFORMAL_SET);
+export const tradChineseInformal = createSystem(TRAD_INFORMAL_SET);
+export const tradChineseFormal = createSystem(TRAD_FORMAL_SET);
+export const simpChineseInformal = createSystem(SIMP_INFORMAL_SET);
+export const simpChineseFormal = createSystem(SIMP_FORMAL_SET);
+export const koreanHangulFormal = createSystem(KOREAN_HANGUL_SET);
+export const koreanHanjaFormal = createSystem(KOREAN_HANJA_FORMAL_SET);
+export const koreanHanjaInformal = createSystem(KOREAN_HANJA_INFORMAL_SET);
+export const japaneseFormal = createSystem(JAPANESE_FORMAL_SET);
+export const japaneseInformal = createSystem(JAPANESE_INFORMAL_SET);
 
-export const tradChineseInformal = {
-  parse(value: IntegerLike): string {
-    if (typeof value === "number") {
-      return formatDecimal(value, TRAD_INFORMAL_SET);
-    }
-    return formatChineseInteger(value, TRAD_INFORMAL_SET);
-  },
-};
-
-export const tradChineseFormal = {
-  parse(value: IntegerLike): string {
-    if (typeof value === "number") {
-      return formatDecimal(value, TRAD_FORMAL_SET);
-    }
-    return formatChineseInteger(value, TRAD_FORMAL_SET);
-  },
-};
-
-export const simpChineseInformal = {
-  parse(value: IntegerLike): string {
-    if (typeof value === "number") {
-      return formatDecimal(value, SIMP_INFORMAL_SET);
-    }
-    return formatChineseInteger(value, SIMP_INFORMAL_SET);
-  },
-};
-
-export const simpChineseFormal = {
-  parse(value: IntegerLike): string {
-    if (typeof value === "number") {
-      return formatDecimal(value, SIMP_FORMAL_SET);
-    }
-    return formatChineseInteger(value, SIMP_FORMAL_SET);
-  },
-};
-
-export const cjkHeavenlyStem = {
-  parse(value: IntegerLike, options: SystemParseOptions = {}): string {
-    return fromCycle(value, STEMS, options.mode ?? "fixed");
-  },
-};
-
-export const cjkEarthlyBranch = {
-  parse(value: IntegerLike, options: SystemParseOptions = {}): string {
-    return fromCycle(value, BRANCHES, options.mode ?? "fixed");
-  },
-};
-
-export const koreanHangulFormal = {
-  parse(value: IntegerLike): string {
-    if (typeof value === "number") {
-      return formatDecimal(value, KOREAN_HANGUL_SET);
-    }
-    return formatChineseInteger(value, KOREAN_HANGUL_SET);
-  },
-};
-
-export const koreanHanjaFormal = {
-  parse(value: IntegerLike): string {
-    if (typeof value === "number") {
-      return formatDecimal(value, KOREAN_HANJA_FORMAL_SET);
-    }
-    return formatChineseInteger(value, KOREAN_HANJA_FORMAL_SET);
-  },
-};
-
-export const koreanHanjaInformal = {
-  parse(value: IntegerLike): string {
-    if (typeof value === "number") {
-      return formatDecimal(value, KOREAN_HANJA_INFORMAL_SET);
-    }
-    return formatChineseInteger(value, KOREAN_HANJA_INFORMAL_SET);
-  },
-};
-
-export const japaneseFormal = {
-  parse(value: IntegerLike): string {
-    if (typeof value === "number") {
-      return formatDecimal(value, JAPANESE_FORMAL_SET);
-    }
-    return formatChineseInteger(value, JAPANESE_FORMAL_SET);
-  },
-};
-
-export const japaneseInformal = {
-  parse(value: IntegerLike): string {
-    if (typeof value === "number") {
-      return formatDecimal(value, JAPANESE_INFORMAL_SET);
-    }
-    return formatChineseInteger(value, JAPANESE_INFORMAL_SET);
-  },
-};
-
-export const hiragana = {
-  parse(value: IntegerLike, options: SystemParseOptions = {}): string {
-    return fromCycle(value, HIRAGANA, options.mode ?? "fixed");
-  },
-};
-
-export const hiraganaIroha = {
-  parse(value: IntegerLike, options: SystemParseOptions = {}): string {
-    return fromCycle(value, HIRAGANA_IROHA, options.mode ?? "fixed");
-  },
-};
-
-export const katakana = {
-  parse(value: IntegerLike, options: SystemParseOptions = {}): string {
-    return fromCycle(value, KATAKANA, options.mode ?? "fixed");
-  },
-};
-
-export const katakanaIroha = {
-  parse(value: IntegerLike, options: SystemParseOptions = {}): string {
-    return fromCycle(value, KATAKANA_IROHA, options.mode ?? "fixed");
-  },
-};
+export const cjkHeavenlyStem = createCyclicSystem(STEMS);
+export const cjkEarthlyBranch = createCyclicSystem(BRANCHES);
+export const hiragana = createCyclicSystem(HIRAGANA);
+export const hiraganaIroha = createCyclicSystem(HIRAGANA_IROHA);
+export const katakana = createCyclicSystem(KATAKANA);
+export const katakanaIroha = createCyclicSystem(KATAKANA_IROHA);
 
 export const systems = {
   heavenlyStem: STEMS,

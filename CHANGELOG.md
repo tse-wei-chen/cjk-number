@@ -2,6 +2,19 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.3.0] - 2026-03-28
+
+### Breaking Changes
+
+- **API Renamed**: The exported `integer` object has been renamed to `number`.
+  - `integer.parseInt(...)` is now `number.parse(...)`.
+  - Exported TypeScript types `IntegerLike` and `IntegerParseOptions` have been renamed to `NumberLike` and `NumberParseOptions`.
+  - *Migration: Any code importing `integer` or related types must be updated to import `number` and use `number.parse` instead.*
+
+### Changed
+
+- Refined internal error messages and documentation to use "number" while preserving native JS integrations like `Number.isInteger`.
+
 ## [0.2.0] - 2026-03-27
 
 ### Added

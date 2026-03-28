@@ -5,7 +5,7 @@ import {
 	cjkIdeographic,
 	hiragana,
 	hiraganaIroha,
-	integer,
+	number,
 	japaneseFormal,
 	japaneseInformal,
 	katakana,
@@ -77,11 +77,11 @@ function readIntFromEnv(
 
 describe("examples from spec", () => {
   it("parses cjk strings into integer values", () => {
-    expect(integer.parseInt("一千零二十三")).toBe(1023);
-    expect(integer.parseInt("壹仟零貳拾參")).toBe(1023);
-    expect(integer.parseInt("壹仟零贰拾叁")).toBe(1023);
-    expect(integer.parseInt("癸")).toBe(10);
-    expect(integer.parseInt("亥")).toBe(12);
+    expect(number.parse("一千零二十三")).toBe(1023);
+    expect(number.parse("壹仟零貳拾參")).toBe(1023);
+    expect(number.parse("壹仟零贰拾叁")).toBe(1023);
+    expect(number.parse("癸")).toBe(10);
+    expect(number.parse("亥")).toBe(12);
   });
 
   it("formats values into all requested systems", () => {
@@ -97,39 +97,39 @@ describe("examples from spec", () => {
 
 describe("new numeric capabilities", () => {
   it("supports negative values", () => {
-    expect(integer.parseInt("負一百零二")).toBe(-102);
+    expect(number.parse("負一百零二")).toBe(-102);
     expect(tradChineseInformal.parse(-320)).toBe("負三百二十");
   });
 
   it("supports decimals", () => {
-    expect(integer.parseInt("一點二三")).toBeCloseTo(1.23);
-    expect(integer.parseInt("一點23")).toBeCloseTo(1.23);
+    expect(number.parse("一點二三")).toBeCloseTo(1.23);
+    expect(number.parse("一點23")).toBeCloseTo(1.23);
     expect(simpChineseInformal.parse(12.34)).toBe("十二点三四");
   });
 
   it("supports bigint parse for very large integers", () => {
-    const parsed = integer.parseInt("九千零七兆一", { preferBigInt: true });
+    const parsed = number.parse("九千零七兆一", { preferBigInt: true });
     expect(typeof parsed).toBe("bigint");
     expect(parsed).toBe(9007000000000001n);
   });
 
   it("supports 京 and 垓 units", () => {
-    const parsed = integer.parseInt("一垓零二京三兆", { preferBigInt: true });
+    const parsed = number.parse("一垓零二京三兆", { preferBigInt: true });
     expect(parsed).toBe(100020003000000000000n);
     expect(tradChineseFormal.parse(10000000000000000n)).toBe("壹京");
   });
 
   it("supports units up to 無量大數", () => {
-    expect(integer.parseInt("一恆河沙", { preferBigInt: true })).toBe(
+    expect(number.parse("一恆河沙", { preferBigInt: true })).toBe(
       10n ** 52n,
     );
-    expect(integer.parseInt("一恒河沙", { preferBigInt: true })).toBe(
+    expect(number.parse("一恒河沙", { preferBigInt: true })).toBe(
       10n ** 52n,
     );
-    expect(integer.parseInt("一不可思議", { preferBigInt: true })).toBe(
+    expect(number.parse("一不可思議", { preferBigInt: true })).toBe(
       10n ** 64n,
     );
-    expect(integer.parseInt("一無量大數", { preferBigInt: true })).toBe(
+    expect(number.parse("一無量大數", { preferBigInt: true })).toBe(
       10n ** 68n,
     );
     expect(tradChineseFormal.parse(10n ** 68n)).toBe("壹無量大數");
@@ -137,16 +137,16 @@ describe("new numeric capabilities", () => {
   });
 
   it("parses all unit tokens in detail", () => {
-    expect(integer.parseInt("拾", { preferBigInt: true })).toBe(10n);
-    expect(integer.parseInt("佰", { preferBigInt: true })).toBe(100n);
-    expect(integer.parseInt("仟", { preferBigInt: true })).toBe(1000n);
+    expect(number.parse("拾", { preferBigInt: true })).toBe(10n);
+    expect(number.parse("佰", { preferBigInt: true })).toBe(100n);
+    expect(number.parse("仟", { preferBigInt: true })).toBe(1000n);
 
     for (const { trad, simp, power } of LARGE_UNIT_TABLE) {
       const expected = 10n ** power;
-      expect(integer.parseInt(`一${trad}`, { preferBigInt: true })).toBe(
+      expect(number.parse(`一${trad}`, { preferBigInt: true })).toBe(
         expected,
       );
-      expect(integer.parseInt(`一${simp}`, { preferBigInt: true })).toBe(
+      expect(number.parse(`一${simp}`, { preferBigInt: true })).toBe(
         expected,
       );
     }
@@ -165,38 +165,38 @@ describe("new numeric capabilities", () => {
 
 describe("edge cases and error paths", () => {
   it("handles strict mode validation", () => {
-    expect(integer.parseInt("一億", { strict: true })).toBe(100000000);
-    expect(() => integer.parseInt("abc", { strict: true })).toThrow(
+    expect(number.parse("一億", { strict: true })).toBe(100000000);
+    expect(() => number.parse("abc", { strict: true })).toThrow(
       SyntaxError,
     );
   });
 
   it("throws for malformed numeric input", () => {
-    expect(() => integer.parseInt("   ")).toThrow(SyntaxError);
-    expect(() => integer.parseInt("-")).toThrow(SyntaxError);
-    expect(() => integer.parseInt("一點")).toThrow(SyntaxError);
-    expect(() => integer.parseInt("一點a")).toThrow(SyntaxError);
-    expect(() => integer.parseInt("一十a")).toThrow(SyntaxError);
-    expect(() => integer.parseInt("一a")).toThrow(SyntaxError);
+    expect(() => number.parse("   ")).toThrow(SyntaxError);
+    expect(() => number.parse("-")).toThrow(SyntaxError);
+    expect(() => number.parse("一點")).toThrow(SyntaxError);
+    expect(() => number.parse("一點a")).toThrow(SyntaxError);
+    expect(() => number.parse("一十a")).toThrow(SyntaxError);
+    expect(() => number.parse("一a")).toThrow(SyntaxError);
   });
 
   it("parses arabic digit strings and promotes overflow to bigint", () => {
-    expect(integer.parseInt("123456")).toBe(123456);
-    expect(integer.parseInt("12萬")).toBe(120000);
-    expect(integer.parseInt("萬", { preferBigInt: true })).toBe(10000n);
-    const overflow = integer.parseInt("一京");
+    expect(number.parse("123456")).toBe(123456);
+    expect(number.parse("12萬")).toBe(120000);
+    expect(number.parse("萬", { preferBigInt: true })).toBe(10000n);
+    const overflow = number.parse("一京");
     expect(typeof overflow).toBe("bigint");
     expect(overflow).toBe(10n ** 16n);
   });
 
   it("throws for decimal integer part above MAX_SAFE_INTEGER", () => {
-    expect(() => integer.parseInt("一京點一")).toThrow(RangeError);
+    expect(() => number.parse("一京點一")).toThrow(RangeError);
   });
 
   it("supports decimal parse edge forms", () => {
-    expect(integer.parseInt("點五")).toBeCloseTo(0.5);
-    expect(integer.parseInt("일점이")).toBeCloseTo(1.2);
-    expect(integer.parseInt("負一點二")).toBeCloseTo(-1.2);
+    expect(number.parse("點五")).toBeCloseTo(0.5);
+    expect(number.parse("일점이")).toBeCloseTo(1.2);
+    expect(number.parse("負一點二")).toBeCloseTo(-1.2);
   });
 
   it("throws for unsupported formatter inputs", () => {
@@ -226,9 +226,9 @@ describe("edge cases and error paths", () => {
     expect(japaneseInformal.parse(5.6)).toBe("五点六");
   });
 
-  it("uses cyclic parse options on integer.parseInt for stems and branches", () => {
-    expect(integer.parseInt("甲", { heavenlyStemMode: "cyclic" })).toBe(1);
-    expect(integer.parseInt("子", { earthlyBranchMode: "cyclic" })).toBe(1);
+  it("uses cyclic parse options on number.parse for stems and branches", () => {
+    expect(number.parse("甲", { heavenlyStemMode: "cyclic" })).toBe(1);
+    expect(number.parse("子", { earthlyBranchMode: "cyclic" })).toBe(1);
   });
 });
 
@@ -280,16 +280,19 @@ describe("korean and japanese sequence systems", () => {
     expect(katakanaIroha.parse(47)).toBe("ス");
   });
 
-  it("auto-detects sequence symbols in integer.parseInt", () => {
-    expect(integer.parseInt("일")).toBe(1);
-    expect(integer.parseInt("일십")).toBe(10);
-    expect(integer.parseInt("일억삼천만")).toBe(130000000);
-    expect(integer.parseInt("壹拾")).toBe(10);
-    expect(integer.parseInt("壱拾")).toBe(10);
-    expect(integer.parseInt("壱京", { preferBigInt: true })).toBe(10n ** 16n);
-    expect(integer.parseInt("十")).toBe(10);
-    expect(integer.parseInt("ぬ")).toBe(10);
-    expect(integer.parseInt("ヌ")).toBe(10);
+  it("auto-detects sequence symbols in number.parse", () => {
+    expect(number.parse("일")).toBe(1);
+    expect(number.parse("구")).toBe(9);
+    expect(number.parse("구십구")).toBe(99);
+    expect(number.parse("구백구십구만")).toBe(9990000);
+    expect(number.parse("일십")).toBe(10);
+    expect(number.parse("일억삼천만")).toBe(130000000);
+    expect(number.parse("壹拾")).toBe(10);
+    expect(number.parse("壱拾")).toBe(10);
+    expect(number.parse("壱京", { preferBigInt: true })).toBe(10n ** 16n);
+    expect(number.parse("十")).toBe(10);
+    expect(number.parse("ぬ")).toBe(10);
+    expect(number.parse("ヌ")).toBe(10);
   });
 });
 
@@ -307,11 +310,26 @@ describe("property-style round trip", () => {
       const tradFormal = tradChineseFormal.parse(n);
       const simpInformal = simpChineseInformal.parse(n);
       const simpFormal = simpChineseFormal.parse(n);
+      const koreanHanjaF = koreanHanjaFormal.parse(n);
+      const koreanHanjaI = koreanHanjaInformal.parse(n);
+      const japaneseF = japaneseFormal.parse(n);
+      const japaneseI = japaneseInformal.parse(n);
+      const koreanHangul = koreanHangulFormal.parse(n);
 
-      expect(integer.parseInt(tradInformal, { preferBigInt: true })).toBe(n);
-      expect(integer.parseInt(tradFormal, { preferBigInt: true })).toBe(n);
-      expect(integer.parseInt(simpInformal, { preferBigInt: true })).toBe(n);
-      expect(integer.parseInt(simpFormal, { preferBigInt: true })).toBe(n);
+      expect(number.parse(tradInformal, { preferBigInt: true })).toBe(n);
+      expect(number.parse(tradFormal, { preferBigInt: true })).toBe(n);
+      expect(number.parse(simpInformal, { preferBigInt: true })).toBe(n);
+      expect(number.parse(simpFormal, { preferBigInt: true })).toBe(n);
+      expect(number.parse(koreanHanjaF, { preferBigInt: true })).toBe(n);
+      expect(number.parse(koreanHanjaI, { preferBigInt: true })).toBe(n);
+      expect(number.parse(japaneseF, { preferBigInt: true })).toBe(n);
+      expect(number.parse(japaneseI, { preferBigInt: true })).toBe(n);
+
+      // Korean Hangul has a homophone ambiguity for '구' (9 and 10^32). 
+      // We mapped '구' to 9, so parsing Hangul > 10^32 will not round-trip.
+      if (n < 10n ** 32n) {
+        expect(number.parse(koreanHangul, { preferBigInt: true })).toBe(n);
+      }
     }
   });
 });

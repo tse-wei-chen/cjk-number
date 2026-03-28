@@ -40,11 +40,11 @@ import {
 } from "cjk-number";
 
 // parse string -> number/bigint
-integer.parseInt("一千零二十三"); // 1023
-integer.parseInt("壹仟零貳拾參"); // 1023
-integer.parseInt("負一百零二"); // -102
-integer.parseInt("一點二三"); // 1.23
-integer.parseInt("一無量大數", { preferBigInt: true }); // 10n ** 68n
+number.parse("一千零二十三"); // 1023
+number.parse("壹仟零貳拾參"); // 1023
+number.parse("負一百零二"); // -102
+number.parse("一點二三"); // 1.23
+number.parse("一無量大數", { preferBigInt: true }); // 10n ** 68n
 
 // format number/bigint -> string
 cjkIdeographic.parse(1023); // "一千零二十三"
@@ -64,7 +64,7 @@ hiragana.parse(46); // "ん"
 
 ## API
 
-### integer.parseInt(input, options?)
+### number.parse(input, options?)
 
 Parses CJK text into number or bigint.
 
@@ -85,11 +85,11 @@ Behavior summary:
 Examples:
 
 ```js
-integer.parseInt("九千零七兆一", { preferBigInt: true }); // 9007000000000001n
-integer.parseInt("癸"); // 10
-integer.parseInt("亥"); // 12
-integer.parseInt("壱京", { preferBigInt: true }); // 10n ** 16n
-integer.parseInt("ぬ"); // 10 (iroha sequence symbol)
+number.parse("九千零七兆一", { preferBigInt: true }); // 9007000000000001n
+number.parse("癸"); // 10
+number.parse("亥"); // 12
+number.parse("壱京", { preferBigInt: true }); // 10n ** 16n
+number.parse("ぬ"); // 10 (iroha sequence symbol)
 ```
 
 ### Formatters
@@ -189,8 +189,8 @@ strict: true validates input characters against an allowed set.
 Use it when you want to reject unexpected symbols early.
 
 ```js
-integer.parseInt("一億", { strict: true }); // ok
-integer.parseInt("abc", { strict: true }); // throws SyntaxError
+number.parse("一億", { strict: true }); // ok
+number.parse("abc", { strict: true }); // throws SyntaxError
 ```
 
 ## Error Cases
