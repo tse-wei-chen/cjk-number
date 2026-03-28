@@ -11,6 +11,8 @@ Supported domains include:
 - Kana sequence systems (gojuon and iroha)
 - Negative numbers, decimals, and very large BigInt values
 
+[繁體中文](doc/README.zh.md) | [简体中文](doc/README.cn.md) | [日本語](doc/README.jp.md) | [한국어](doc/README.ko.md)
+
 ## Install
 
 ```sh
