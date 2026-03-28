@@ -68,6 +68,7 @@ const NORMALIZE_MAP: Record<string, string> = {
   팔: "八",
   구: "九",
   壱: "一",
+  弍: "二",
   弐: "二",
   参: "三",
   無量大數: "无量大数",
@@ -120,9 +121,8 @@ function normalizeInput(raw: string): string {
 }
 
 function toBigInt(value: NumberLike): bigint {
-  if (typeof value === "bigint") {
-    return value;
-  }
+  if (typeof value === "bigint") return value;
+  if (typeof value === "string") return BigInt(value);
   if (!Number.isFinite(value) || !Number.isInteger(value)) {
     throw new RangeError("Expected an integer value");
   }
@@ -207,7 +207,7 @@ function parseChineseNumber(raw: string): bigint {
   return total;
 }
 
-function parseFractionDigits(raw: string): number {
+function parseFractionDigits(raw: string): string {
   if (!raw) {
     throw new SyntaxError("Fraction part cannot be empty");
   }
@@ -227,7 +227,7 @@ function parseFractionDigits(raw: string): number {
     decimal += String(digit);
   }
 
-  return Number(`0.${decimal}`);
+  return decimal;
 }
 
 function toBestNumeric(value: bigint, preferBigInt: boolean): number | bigint {
@@ -317,7 +317,7 @@ function formatSection(section: number, set: DigitSet): string {
     }
 
     const isTenPosition = value === 10;
-    const canDropOne = isTenPosition && digit === 1 && output.length === 0;
+    const canDropOne = isTenPosition && digit === 1 && output.length === 0 && (set.dropTenOne ?? true);
 
     if (!canDropOne) {
       output += set.digits[digit - 1];
@@ -374,21 +374,18 @@ function formatChineseNumber(value: NumberLike, set: DigitSet): string {
   return negative ? `負${output}` : output;
 }
 
-function formatDecimal(value: number, set: DigitSet): string {
-  if (!Number.isFinite(value)) {
+function formatDecimal(value: NumberLike, set: DigitSet): string {
+  if (typeof value === "number" && !Number.isFinite(value)) {
     throw new RangeError("Expected a finite number");
   }
 
-  if (Number.isInteger(value)) {
-    return formatChineseNumber(value, set);
-  }
-
-  const negative = value < 0;
-  const source = String(Math.abs(value));
-  const [intPart, fracPart] = source.split(".");
+  const source = String(value);
+  const negative = source.startsWith("-");
+  const absSource = negative ? source.slice(1) : source;
+  const [intPart = "0", fracPart] = absSource.split(".");
 
   if (!fracPart) {
-    return formatChineseNumber(value, set);
+    return formatChineseNumber(BigInt(intPart), set);
   }
 
   const intText = formatChineseNumber(BigInt(intPart), set);
@@ -406,21 +403,36 @@ function formatDecimal(value: number, set: DigitSet): string {
 function parseValue(
   input: string,
   options: NumberParseOptions = {},
-): number | bigint {
+): number | bigint | string {
   const modeStem = options.heavenlyStemMode ?? "fixed";
   const modeBranch = options.earthlyBranchMode ?? "fixed";
+  const explicit = options.explicitTyping;
 
-  try {
+  if (explicit === "cjkHeavenlyStem") {
     return parseCycle(input, STEMS, modeStem);
-  } catch {
-    // Not a heavenly stem, continue to next parser.
+  }
+  if (explicit === "cjkEarthlyBranch") {
+    return parseCycle(input, BRANCHES, modeBranch);
+  }
+  if (explicit === "hiragana") {
+    const idx = (HIRAGANA as readonly string[]).indexOf(input);
+    if (idx >= 0) return idx + 1;
+  }
+  if (explicit === "hiraganaIroha") {
+    const idx = (HIRAGANA_IROHA as readonly string[]).indexOf(input);
+    if (idx >= 0) return idx + 1;
+  }
+  if (explicit === "katakana") {
+    const idx = (KATAKANA as readonly string[]).indexOf(input);
+    if (idx >= 0) return idx + 1;
+  }
+  if (explicit === "katakanaIroha") {
+    const idx = (KATAKANA_IROHA as readonly string[]).indexOf(input);
+    if (idx >= 0) return idx + 1;
   }
 
-  try {
-    return parseCycle(input, BRANCHES, modeBranch);
-  } catch {
-    // Not an earthly branch, continue to sequence/numeric parsing.
-  }
+  // Handle other explicit numeric systems by validating characters?
+  // Or just fall through if not a sequence symbol.
 
   const sequenceValue = SEQUENCE_SYMBOL_TO_NUMBER[input];
   if (sequenceValue !== undefined) {
@@ -442,21 +454,114 @@ function parseValue(
   if (body.includes(".")) {
     const [intRaw, fracRaw = ""] = body.split(".");
     const intValue = intRaw ? parseChineseNumber(intRaw) : 0n;
-    const fracValue = parseFractionDigits(fracRaw);
+    const fracDigits = parseFractionDigits(fracRaw);
 
+    if (options.mode === "exactDecimal") {
+      // Exact path: return a lossless decimal string.
+      const exact = `${intValue}.${fracDigits}`;
+      return negative ? `-${exact}` : exact;
+    }
+
+    // Legacy path: fall back to Number (may lose precision for very large integers).
     if (intValue > BigInt(Number.MAX_SAFE_INTEGER)) {
       throw new RangeError(
-        "Decimal parse does not support integer part above MAX_SAFE_INTEGER",
+        "Decimal parse does not support integer part above MAX_SAFE_INTEGER. Use { mode: \"exactDecimal\" } to bypass.",
       );
     }
 
-    const composed = Number(intValue) + fracValue;
+    const composed = Number(intValue) + Number(`0.${fracDigits}`);
     return negative ? -composed : composed;
   }
 
   const parsed = parseChineseNumber(body);
   const signed = negative ? -parsed : parsed;
-  return toBestNumeric(signed, options.preferBigInt ?? false);
+  return toBestNumeric(signed, options.mode === "preferBigInt");
+}
+
+function toScaleFormat(val: NumberLike) {
+  const str = String(val);
+  const isNeg = str.startsWith("-");
+  const abs = isNeg ? str.slice(1) : str;
+  const parts = abs.split(".");
+  return {
+    intPart: parts[0] || "0",
+    fracPart: parts[1] || "",
+    isNeg,
+  };
+}
+
+function alignScales(a: NumberLike, b: NumberLike) {
+  const parsedA = toScaleFormat(a);
+  const parsedB = toScaleFormat(b);
+  const maxDec = Math.max(parsedA.fracPart.length, parsedB.fracPart.length);
+
+  const strA = parsedA.intPart + parsedA.fracPart.padEnd(maxDec, "0");
+  const strB = parsedB.intPart + parsedB.fracPart.padEnd(maxDec, "0");
+
+  const bigA = BigInt(strA) * (parsedA.isNeg ? -1n : 1n);
+  const bigB = BigInt(strB) * (parsedB.isNeg ? -1n : 1n);
+
+  return { bigA, bigB, scale: maxDec };
+}
+
+function applyScale(val: bigint, scale: number): string {
+  let str = (val < 0n ? -val : val).toString();
+  if (scale === 0) return (val < 0n ? "-" : "") + str;
+
+  str = str.padStart(scale + 1, "0");
+  const intPart = str.slice(0, -scale);
+  const fracPart = str.slice(-scale).replace(/0+$/, "");
+
+  const joined = fracPart ? `${intPart || "0"}.${fracPart}` : (intPart || "0");
+  return (val < 0n ? "-" : "") + joined;
+}
+
+function mixedAdd(a: NumberLike, b: NumberLike): NumberLike {
+  const { bigA, bigB, scale } = alignScales(a, b);
+  return applyScale(bigA + bigB, scale);
+}
+
+function mixedSubtract(a: NumberLike, b: NumberLike): NumberLike {
+  const { bigA, bigB, scale } = alignScales(a, b);
+  return applyScale(bigA - bigB, scale);
+}
+
+function mixedMultiply(a: NumberLike, b: NumberLike): NumberLike {
+  const { bigA, bigB, scale } = alignScales(a, b);
+  return applyScale(bigA * bigB, scale * 2);
+}
+
+function mixedDivide(a: NumberLike, b: NumberLike): NumberLike {
+  const { bigA, bigB } = alignScales(a, b);
+  if (bigB === 0n) throw new RangeError("Division by zero");
+  
+  const EXTRA = 16n;
+  const result = (bigA * (10n ** EXTRA)) / bigB;
+  return applyScale(result, Number(EXTRA));
+}
+
+function mixedModulo(a: NumberLike, b: NumberLike): NumberLike {
+  const { bigA, bigB, scale } = alignScales(a, b);
+  return applyScale(bigA % bigB, scale);
+}
+
+function mixedPow(base: NumberLike, exponent: NumberLike): NumberLike {
+  const parsedExp = toScaleFormat(exponent);
+  if (parsedExp.fracPart.length > 0) return Number(base) ** Number(exponent);
+  const expNum = BigInt(parsedExp.intPart) * (parsedExp.isNeg ? -1n : 1n);
+  if (expNum < 0n) return Number(base) ** Number(exponent);
+
+  const parsedBase = toScaleFormat(base);
+  const baseBig = BigInt(parsedBase.intPart + parsedBase.fracPart);
+  const scale = parsedBase.fracPart.length * Number(expNum);
+  
+  const result = baseBig ** expNum;
+  return applyScale(parsedBase.isNeg && expNum % 2n !== 0n ? -result : result, scale);
+}
+
+function mixedCompare(a: NumberLike, b: NumberLike): number {
+  const { bigA, bigB } = alignScales(a, b);
+  return bigA > bigB ? 1 : bigA < bigB ? -1 : 0;
 }
 
 function createSystem(set: DigitSet) {
@@ -468,7 +573,7 @@ function createSystem(set: DigitSet) {
      * @returns The formatted string representation in the respective CJK system.
      */
     parse(value: NumberLike): string {
-      if (typeof value === "number") {
+      if (String(value).includes(".")) {
         return formatDecimal(value, set);
       }
       return formatChineseNumber(value, set);
@@ -482,8 +587,8 @@ function createSystem(set: DigitSet) {
       if (values.length === 0) {
         return set.zero;
       }
-      const [first, ...rest] = values.map((v) => BigInt(number.parse(v)));
-      const sum = rest.reduce((a, b) => a + b, first);
+      const [first, ...rest] = values.map((v) => number.parse(v));
+      const sum = rest.reduce(mixedAdd, first);
       return this.parse(sum);
     },
     /**
@@ -495,8 +600,8 @@ function createSystem(set: DigitSet) {
       if (values.length === 0) {
         return set.zero;
       }
-      const [first, ...rest] = values.map((v) => BigInt(number.parse(v)));
-      const diff = rest.reduce((a, b) => a - b, first);
+      const [first, ...rest] = values.map((v) => number.parse(v));
+      const diff = rest.reduce(mixedSubtract, first);
       return this.parse(diff);
     },
     /**
@@ -508,8 +613,8 @@ function createSystem(set: DigitSet) {
       if (values.length === 0) {
         return set.zero;
       }
-      const [first, ...rest] = values.map((v) => BigInt(number.parse(v)));
-      const product = rest.reduce((a, b) => a * b, first);
+      const [first, ...rest] = values.map((v) => number.parse(v));
+      const product = rest.reduce(mixedMultiply, first);
       return this.parse(product);
     },
     /**
@@ -521,9 +626,47 @@ function createSystem(set: DigitSet) {
       if (values.length === 0) {
         return set.zero;
       }
-      const [first, ...rest] = values.map((v) => BigInt(number.parse(v)));
-      const quotient = rest.reduce((a, b) => a / b, first);
+      const [first, ...rest] = values.map((v) => number.parse(v));
+      const quotient = rest.reduce(mixedDivide, first);
       return this.parse(quotient);
+    },
+    /**
+     * Calculates the remainder of the first string divided by the second.
+     */
+    modulo(a: string, b: string): string {
+      const numA = number.parse(a);
+      const numB = number.parse(b);
+      return this.parse(mixedModulo(numA, numB));
+    },
+    /**
+     * Raises the first string to the power of the second string or a number.
+     */
+    pow(base: string, exponent: string | number): string {
+      const numBase = number.parse(base);
+      const numExp = typeof exponent === "string" ? number.parse(exponent) : exponent;
+      return this.parse(mixedPow(numBase, numExp));
+    },
+    /**
+     * Returns the absolute value of the string.
+     */
+    abs(value: string): string {
+      const num = number.parse(value);
+      if (typeof num === "bigint") {
+        return this.parse(num < 0n ? -num : num);
+      }
+      if (typeof num === "string") {
+        return this.parse(num.startsWith("-") ? num.slice(1) : num);
+      }
+      return this.parse(Math.abs(num));
+    },
+    /**
+     * Compares two strings. Useful for Array.prototype.sort().
+     * @returns 1 if a > b, -1 if a < b, 0 if equal.
+     */
+    compare(a: string, b: string): number {
+      const numA = number.parse(a);
+      const numB = number.parse(b);
+      return mixedCompare(numA, numB);
     },
   };
 }
@@ -545,13 +688,15 @@ function createCyclicSystem(chars: readonly string[]) {
 
 export const number = {
   /**
-   * Parses a CJK numeric string into a number or bigint.
+   * Parses a CJK numeric string into a number, bigint, or exact decimal string.
    *
    * @param input The CJK numeric string to parse.
-   * @param options Options defining how to handle the parse (e.g., 'preferBigInt' or 'strict' mode).
-   * @returns The parsed number or bigint.
+   * @param options Options defining how to handle the parse.
+   *   - `mode: "preferBigInt"` – return `bigint` for integers.
+   *   - `mode: "exactDecimal"` – return decimals as lossless strings, bypassing float limits.
+   * @returns The parsed number, bigint, or exact decimal string.
    */
-  parse(input: string, options?: NumberParseOptions): number | bigint {
+  parse(input: string, options?: NumberParseOptions): number | bigint | string {
     return parseValue(input, options);
   },
 };

@@ -39,19 +39,30 @@ import {
   hiragana
 } from "cjk-number";
 
-// parse string -> number/bigint
+// parse string -> number / bigint / string
 number.parse("一千零二十三"); // 1023
 number.parse("壹仟零貳拾參"); // 1023
 number.parse("負一百零二"); // -102
 number.parse("一點二三"); // 1.23
-number.parse("一無量大數", { preferBigInt: true }); // 10n ** 68n
+number.parse("一無量大數", { mode: "preferBigInt" }); // 10n ** 68n
+number.parse("一京點一", { mode: "exactDecimal" }); // "10000000000000000.1" (lossless)
 
-// format number/bigint -> string
+// format number/bigint/string -> CJK
 cjkIdeographic.parse(1023); // "一千零二十三"
 tradChineseFormal.parse(1023); // "壹仟零貳拾參"
 simpChineseFormal.parse(1023); // "壹仟零贰拾叁"
 koreanHangulFormal.parse(10n ** 68n); // "일무량대수"
 japaneseFormal.parse(10n ** 68n); // "壱無量大数"
+
+// arithmetic on CJK strings (exact BigFloat engine)
+tradChineseInformal.add(["一兆", "一點五"]); // "一兆零一點五"
+tradChineseInformal.subtract(["一京", "一兆"]); // "九千九百九十九兆"
+tradChineseInformal.multiply(["一億", "一億"]); // "一京"
+tradChineseInformal.divide(["五", "二"]); // "二點五"
+tradChineseInformal.modulo("五", "二"); // "一"
+tradChineseInformal.pow("二", "十"); // "一千零二十四"
+tradChineseInformal.abs("負一兆"); // "一兆"
+["三十", "二", "十一"].sort(tradChineseInformal.compare); // ["二", "十一", "三十"]
 
 // stem/branch
 cjkHeavenlyStem.parse(10); // "癸"
@@ -66,35 +77,66 @@ hiragana.parse(46); // "ん"
 
 ### number.parse(input, options?)
 
-Parses CJK text into number or bigint.
+Parses CJK text into a `number`, `bigint`, or exact decimal `string`.
 
 Options:
 
-- strict?: boolean
-- preferBigInt?: boolean
-- heavenlyStemMode?: "fixed" | "cyclic"
-- earthlyBranchMode?: "fixed" | "cyclic"
+| Option | Type | Default | Description |
+|---|---|---|---|
+| `mode` | `"number" \| "preferBigInt" \| "exactDecimal"` | `"number"` | Controls the output numeric type |
+| `strict` | `boolean` | `false` | Rejects unsupported characters early |
+| `heavenlyStemMode` | `"fixed" \| "cyclic"` | `"fixed"` | How to handle out-of-range stem values |
+| `earthlyBranchMode` | `"fixed" \| "cyclic"` | `"fixed"` | How to handle out-of-range branch values |
+| `explicitTyping` | `ExplicitTyping` | `undefined` | Forces a specific CJK system for parsing |
 
-Behavior summary:
+**`mode` values:**
 
-- If the value fits safely, returns number by default.
-- If out of Number safe range, returns bigint automatically.
-- If preferBigInt is true, always returns bigint for integer parse paths.
-- Decimal parse returns number.
+- `"number"` (default) — returns `number`; auto-promotes to `bigint` if the integer exceeds `Number.MAX_SAFE_INTEGER`.
+- `"preferBigInt"` — always returns `bigint` for integer parse paths.
+- `"exactDecimal"` — returns a lossless decimal `string` (e.g. `"10000000000000000.1"`), bypassing the `MAX_SAFE_INTEGER` restriction for mixed large+decimal values.
+
+**`explicitTyping` values:**
+
+- Choose from any of the available system names (e.g., `"hiraganaIroha"`, `"tradChineseFormal"`, `"koreanHangulFormal"`) to force the parser to use that system's mapping specifically. This is useful for resolving conflicts between systems that share the same symbols (like Hiragana Gojuon vs Iroha).
 
 Examples:
 
 ```js
-number.parse("九千零七兆一", { preferBigInt: true }); // 9007000000000001n
+number.parse("九千零七兆一", { mode: "preferBigInt" }); // 9007000000000001n
 number.parse("癸"); // 10
 number.parse("亥"); // 12
-number.parse("壱京", { preferBigInt: true }); // 10n ** 16n
-number.parse("ぬ"); // 10 (iroha sequence symbol)
+number.parse("壱京", { mode: "preferBigInt" }); // 10n ** 16n
+number.parse("ぬ", { explicitTyping: "hiraganaIroha" }); // 10
+number.parse("ぬ"); // 23 (default gojuon sequence)
+number.parse("一京點一", { mode: "exactDecimal" }); // "10000000000000000.1"
 ```
 
 ### Formatters
 
-All formatters expose parse(value).
+All formatters expose the following methods:
+
+#### `parse(value)`
+
+Formats a `number`, `bigint`, or exact decimal `string` into a CJK numeral string.
+
+#### Arithmetic methods
+
+All numeric formatters (not cyclic/sequence ones) also expose arithmetic methods that accept CJK strings and return a CJK string in the same numeral system:
+
+```js
+tradChineseInformal.add(["一千", "二十三"]); // "一千零二十三"
+tradChineseInformal.subtract(["一京", "一兆"]); // "九千九百九十九兆"
+tradChineseInformal.multiply(["一億", "一億"]); // "一京"
+tradChineseInformal.divide(["五", "二"]); // "二點五"
+tradChineseInformal.modulo("五", "二"); // "一"
+tradChineseInformal.pow("二", "三"); // "八"
+tradChineseInformal.pow("二", 3); // "八" (exponent can be a number)
+tradChineseInformal.abs("負五十"); // "五十"
+tradChineseInformal.compare("三十", "二"); // 1
+["三十", "二", "十一"].sort(tradChineseInformal.compare); // ["二", "十一", "三十"]
+```
+
+All arithmetic uses a **zero-dependency BigFloat engine**: decimal points are scaled out to `BigInt` before any operation, so results like `"一兆" + "一點五"` are exact with no floating-point drift.
 
 Available formatters:
 
@@ -119,7 +161,7 @@ Examples:
 
 ```js
 tradChineseInformal.parse(-320); // "負三百二十"
-simpChineseInformal.parse(12.34); // "十二點三四"
+simpChineseInformal.parse(12.34); // "十二点三四"
 tradChineseFormal.parse(10n ** 68n); // "壹無量大數"
 simpChineseFormal.parse(10n ** 64n); // "壹不可思议"
 
@@ -197,10 +239,11 @@ number.parse("abc", { strict: true }); // throws SyntaxError
 
 Common thrown errors:
 
-- SyntaxError: unsupported/invalid text shape
-- RangeError: invalid formatter range in fixed sequence mode
-- RangeError: non-integer passed to integer-only paths
-- RangeError: decimal parse integer part exceeds Number.MAX_SAFE_INTEGER
+- `SyntaxError`: unsupported or invalid text shape
+- `RangeError`: invalid formatter range in fixed sequence mode
+- `RangeError`: non-integer passed to integer-only paths
+- `RangeError`: decimal parse integer part exceeds `Number.MAX_SAFE_INTEGER` — use `{ mode: "exactDecimal" }` to bypass
+- `RangeError`: division by zero in `divide` or `modulo`
 
 ## Development
 

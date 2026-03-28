@@ -2,6 +2,28 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.4.0] - 2026-03-28
+
+### Breaking Changes
+
+- **`preferBigInt` option removed**: Replaced by `{ mode: "preferBigInt" }` in `NumberParseOptions`.
+- **`NumberLike` type widened**: Now includes `string` to support lossless decimals. Callers using `exactDecimal` mode should handle potential string returns.
+
+### Added
+
+- **`explicitTyping` option**: Allows forcing a specific system (e.g., `hiraganaIroha`) to resolve ambiguous symbols like "ぬ".
+- **Arithmetic methods on numeric formatters**: Added `add`, `subtract`, `multiply`, and `divide` to all numeric system formatters.
+- **Advanced math methods on numeric formatters**: Added `modulo`, `pow`, `abs`, and `compare` (compatible with `Array.prototype.sort`).
+- **Zero-dependency BigFloat engine**: An internal fixed-point engine that eliminates floating-point rounding errors by scaling decimals to BigInt.
+- **`NumberMode` enum and unified `mode` option**: Introduced a single `mode` field to choose between `number`, `preferBigInt`, and `exactDecimal` output.
+- **Exact decimal parse path**: Supports parsing and round-trip formatting of lossless decimal strings via `{ mode: "exactDecimal" }`.
+
+### Changed
+
+- **Improved Error Messages**: Oversized decimal integer parts now suggest using `exactDecimal` mode.
+- **Formatter Upgrades**: `formatDecimal` now accepts `NumberLike` (including strings) for direct consumption of exact decimals.
+- **Internal Refactoring**: `parseFractionDigits` now returns raw digit strings to enable lossless decimal composition.
+
 ## [0.3.0] - 2026-03-28
 
 ### Breaking Changes

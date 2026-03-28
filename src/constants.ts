@@ -61,10 +61,10 @@ export const KOREAN_HANJA_INFORMAL_DIGITS = [
 ] as const;
 export const JAPANESE_FORMAL_DIGITS = [
   "壱",
-  "弐",
+  "弍",
   "参",
   "四",
-  "五",
+  "伍",
   "六",
   "七",
   "八",
@@ -320,7 +320,10 @@ export const SEQUENCE_SYMBOL_TO_NUMBER: Record<string, number> = (() => {
   const map: Record<string, number> = {};
   const put = (chars: readonly string[]) => {
     chars.forEach((char, index) => {
-      map[char] = index + 1;
+      // Prioritize the first mapping we encounter (e.g. Gojuon over Iroha)
+      if (map[char] === undefined) {
+        map[char] = index + 1;
+      }
     });
   };
 
@@ -429,6 +432,7 @@ export const TRAD_INFORMAL_SET: DigitSet = {
   digits: ["一", "二", "三", "四", "五", "六", "七", "八", "九"],
   smallUnits: ["十", "百", "千"],
   bigUnits: [...TRAD_BIG_UNITS],
+  dropTenOne: true,
 };
 
 export const TRAD_FORMAL_SET: DigitSet = {
@@ -437,6 +441,7 @@ export const TRAD_FORMAL_SET: DigitSet = {
   digits: ["壹", "貳", "參", "肆", "伍", "陸", "柒", "捌", "玖"],
   smallUnits: ["拾", "佰", "仟"],
   bigUnits: [...TRAD_BIG_UNITS],
+  dropTenOne: false,
 };
 
 export const SIMP_INFORMAL_SET: DigitSet = {
@@ -445,6 +450,7 @@ export const SIMP_INFORMAL_SET: DigitSet = {
   digits: ["一", "二", "三", "四", "五", "六", "七", "八", "九"],
   smallUnits: ["十", "百", "千"],
   bigUnits: [...SIMP_BIG_UNITS],
+  dropTenOne: true,
 };
 
 export const SIMP_FORMAL_SET: DigitSet = {
@@ -453,6 +459,7 @@ export const SIMP_FORMAL_SET: DigitSet = {
   digits: ["壹", "贰", "叁", "肆", "伍", "陆", "柒", "捌", "玖"],
   smallUnits: ["拾", "佰", "仟"],
   bigUnits: [...SIMP_BIG_UNITS],
+  dropTenOne: false,
 };
 
 export const KOREAN_HANGUL_SET: DigitSet = {
@@ -461,6 +468,7 @@ export const KOREAN_HANGUL_SET: DigitSet = {
   digits: [...KOREAN_HANGUL_DIGITS],
   smallUnits: ["십", "백", "천"],
   bigUnits: [...KOREAN_BIG_UNITS],
+  dropTenOne: false,
 };
 
 export const KOREAN_HANJA_FORMAL_SET: DigitSet = {
@@ -469,6 +477,7 @@ export const KOREAN_HANJA_FORMAL_SET: DigitSet = {
   digits: [...KOREAN_HANJA_FORMAL_DIGITS],
   smallUnits: ["拾", "佰", "仟"],
   bigUnits: [...TRAD_BIG_UNITS],
+  dropTenOne: false,
 };
 
 export const KOREAN_HANJA_INFORMAL_SET: DigitSet = {
@@ -477,6 +486,7 @@ export const KOREAN_HANJA_INFORMAL_SET: DigitSet = {
   digits: [...KOREAN_HANJA_INFORMAL_DIGITS],
   smallUnits: ["十", "百", "千"],
   bigUnits: [...TRAD_BIG_UNITS],
+  dropTenOne: true,
 };
 
 export const JAPANESE_FORMAL_SET: DigitSet = {
@@ -485,6 +495,7 @@ export const JAPANESE_FORMAL_SET: DigitSet = {
   digits: [...JAPANESE_FORMAL_DIGITS],
   smallUnits: ["拾", "百", "千"],
   bigUnits: [...JAPANESE_BIG_UNITS],
+  dropTenOne: false,
 };
 
 export const JAPANESE_INFORMAL_SET: DigitSet = {
@@ -493,6 +504,7 @@ export const JAPANESE_INFORMAL_SET: DigitSet = {
   digits: [...JAPANESE_INFORMAL_DIGITS],
   smallUnits: ["十", "百", "千"],
   bigUnits: [...JAPANESE_BIG_UNITS],
+  dropTenOne: true,
 };
 
 export const BIG_UNIT_ORDER = createBigUnitOrder(SIMP_BIG_UNITS);
