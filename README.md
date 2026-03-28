@@ -26,7 +26,7 @@ npm install cjk-number
 
 ```js
 import {
-  integer,
+  number,
   cjkIdeographic,
   tradChineseInformal,
   tradChineseFormal,
