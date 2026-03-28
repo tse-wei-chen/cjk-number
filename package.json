@@ -1,6 +1,6 @@
 {
   "name": "cjk-number",
-  "version": "0.4.1",
+  "version": "0.4.2",
   "description": "Convert between numbers and CJK number systems",
   "author": "tse-wei-chen",
   "repository": {

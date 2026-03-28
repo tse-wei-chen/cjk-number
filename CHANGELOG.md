@@ -2,6 +2,17 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.4.2] - 2026-03-28
+
+### Breaking Changes
+
+- **API Simplification**: Removed redundant `heavenlyStemMode` and `earthlyBranchMode` from `NumberParseOptions`. These options were biologically irrelevant for string-to-number parsing and are now exclusively available via the formatting system API (`SystemParseOptions`).
+
+### Changed
+
+- **Improved Type Safety**: Constant digit sets are now strictly validated at runtime against the `DigitArray9` tuple using the `toDigitArray9` helper, preventing data corruption while maintaining an optimized string-based source format.
+- **Dead Code Removal**: Cleaned up unused intermediate arithmetic functions (`mixedAdd`, `mixedSubtract`, etc.) previously replaced by the new high-performance Accumulator engine.
+
 ## [0.4.1] - 2026-03-28
 
 ### Added

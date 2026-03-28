@@ -85,8 +85,6 @@ Options:
 |---|---|---|---|
 | `mode` | `"number" \| "preferBigInt" \| "exactDecimal"` | `"number"` | Controls the output numeric type |
 | `strict` | `boolean` | `false` | Rejects unsupported characters early |
-| `heavenlyStemMode` | `"fixed" \| "cyclic"` | `"fixed"` | How to handle out-of-range stem values |
-| `earthlyBranchMode` | `"fixed" \| "cyclic"` | `"fixed"` | How to handle out-of-range branch values |
 | `explicitTyping` | `ExplicitTyping` | `undefined` | Forces a specific CJK system for parsing |
 
 **`mode` values:**

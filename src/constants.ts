@@ -180,7 +180,3 @@ export const JAPANESE_INFORMAL_SET: DigitSet = {
 };
 
 export const BIG_UNIT_ORDER = createBigUnitOrder(SIMP_BIG_UNITS);
-export interface ScaledValue {
-  big: bigint;
-  scale: number;
-}

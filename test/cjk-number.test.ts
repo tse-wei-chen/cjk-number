@@ -247,10 +247,6 @@ describe("edge cases and error paths", () => {
     expect(japaneseInformal.parse(5.6)).toBe("五点六");
   });
 
-  it("uses cyclic parse options on number.parse for stems and branches", () => {
-    expect(number.parse("甲", { heavenlyStemMode: "cyclic" })).toBe(1);
-    expect(number.parse("子", { earthlyBranchMode: "cyclic" })).toBe(1);
-  });
 });
 
 describe("heavenly stem and earthly branch modes", () => {
@@ -690,10 +686,6 @@ describe("exhaustive number.parse coverage", () => {
     });
   });
 
-  it("cyclic stem/branch wraps around", () => {
-    expect(number.parse("甲", { heavenlyStemMode: "cyclic" })).toBe(1);
-    expect(number.parse("子", { earthlyBranchMode: "cyclic" })).toBe(1);
-  });
 
   it("preferBigInt always returns bigint for integers", () => {
     expect(number.parse("一", { mode: "preferBigInt" })).toBe(1n);

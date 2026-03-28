@@ -47,10 +47,6 @@ export interface NumberParseOptions {
   strict?: boolean;
   /** Controls the numeric output type. Defaults to `"number"`. */
   mode?: NumberMode;
-  /** Controls the heavenly stem mode. Defaults to `"fixed"`. */
-  heavenlyStemMode?: CyclicMode;
-  /** Controls the earthly branch mode. Defaults to `"fixed"`. */
-  earthlyBranchMode?: CyclicMode;
   /**
    * Controls the explicit typing of the output.
    * - `"cjkIdeographic"` – always return CJK ideographic characters.
@@ -94,4 +90,9 @@ export interface DigitSet {
   smallUnits: [string, string, string];
   bigUnits: string[];
   dropTenOne?: boolean;
+}
+
+export interface ScaledValue {
+  big: bigint;
+  scale: number;
 }

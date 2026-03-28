@@ -4,6 +4,7 @@ import {
   NumberParseOptions,
   NumberLike,
   DigitSet,
+  ScaledValue,
 } from "./types.js";
 import {
   STEMS,
@@ -30,7 +31,6 @@ import {
   KOREAN_HANJA_INFORMAL_SET,
   JAPANESE_FORMAL_SET,
   JAPANESE_INFORMAL_SET,
-  ScaledValue,
 } from "./constants.js";
 
 export * from "./types.js";
@@ -269,19 +269,13 @@ function fromCycle(
 function parseCycle(
   input: string,
   chars: readonly string[],
-  mode: CyclicMode,
 ): number {
   const index = chars.indexOf(input);
   if (index < 0) {
     throw new SyntaxError(`Unknown symbol ${input}`);
   }
 
-  const value = index + 1;
-  if (mode === "fixed") {
-    return value;
-  }
-
-  return value;
+  return index + 1;
 }
 
 function formatSection(section: number, set: DigitSet): string {
@@ -394,15 +388,13 @@ function parseValue(
   input: string,
   options: NumberParseOptions = {},
 ): number | bigint | string {
-  const modeStem = options.heavenlyStemMode ?? "fixed";
-  const modeBranch = options.earthlyBranchMode ?? "fixed";
   const explicit = options.explicitTyping;
 
   if (explicit === "cjkHeavenlyStem") {
-    return parseCycle(input, STEMS, modeStem);
+    return parseCycle(input, STEMS);
   }
   if (explicit === "cjkEarthlyBranch") {
-    return parseCycle(input, BRANCHES, modeBranch);
+    return parseCycle(input, BRANCHES);
   }
   if (explicit === "hiragana") {
     const idx = (HIRAGANA as readonly string[]).indexOf(input);
