@@ -243,8 +243,8 @@ describe("edge cases and error paths", () => {
     expect(koreanHanjaFormal.parse(5.6)).toBe("五점六");
     expect(koreanHanjaInformal.parse(5.6)).toBe("五점六");
     expect(koreanHanjaInformal.parse(10n ** 8n)).toBe("一億");
-    expect(japaneseFormal.parse(5.6)).toBe("伍点六");
-    expect(japaneseInformal.parse(5.6)).toBe("五点六");
+    expect(japaneseFormal.parse(5.6)).toBe("五点六");
+    expect(japaneseInformal.parse(5.6)).toBe("五・六");
   });
 
 });
@@ -275,7 +275,7 @@ describe("korean and japanese sequence systems", () => {
 
   it("formats japanese numeric systems up to large units", () => {
     expect(japaneseFormal.parse(1)).toBe("壱");
-    expect(japaneseFormal.parse(1023)).toBe("壱千零弍拾参");
+    expect(japaneseFormal.parse(1023)).toBe("壱千零弐拾参");
     expect(japaneseFormal.parse(10n ** 68n)).toBe("壱無量大数");
     expect(japaneseInformal.parse(1)).toBe("一");
     expect(japaneseInformal.parse(1023)).toBe("一千零二十三");
@@ -614,7 +614,7 @@ describe("exhaustive exactDecimal parse tests", () => {
     expect(tradChineseInformal.parse(exact)).toBe("一兆點二五");
     expect(simpChineseInformal.parse(exact)).toBe("一兆点二五");
     expect(koreanHanjaFormal.parse(exact)).toBe("壹兆점貳五");
-    expect(japaneseFormal.parse(exact)).toBe("壱兆点弍伍");
+    expect(japaneseFormal.parse(exact)).toBe("壱兆点弐五");
   });
 
   it("exactDecimal handles all large unit names with decimal", () => {
@@ -737,6 +737,34 @@ describe("exhaustive number.parse coverage", () => {
     expect(() => number.parse("abc", { strict: true })).toThrow(SyntaxError);
     expect(() => number.parse("1abc", { strict: true })).toThrow(SyntaxError);
   });
+
+  it("parses Japanese decimal forms explicitly", () => {
+    // Formal/Common '.'
+    expect(number.parse("三点一四")).toBeCloseTo(3.14);
+    expect(number.parse("零点五")).toBeCloseTo(0.5);
+    // Informal/Verbal '・'
+    expect(number.parse("三・一四")).toBeCloseTo(3.14);
+    expect(number.parse("〇・五")).toBeCloseTo(0.5);
+    // Large Japanese numbers with decimals
+    expect(number.parse("一億五千万点五")).toBeCloseTo(150000000.5);
+    expect(number.parse("五兆三千億・一二三")).toBeCloseTo(5300000000000.123);
+    // Japanese Formal (壱, 弐, 参) with decimals
+    expect(number.parse("壱億弐千万点参")).toBeCloseTo(120000000.3);
+  });
+
+  it("handles Japanese informal dot ('・') in multiple contexts", () => {
+    // Leading dot
+    expect(number.parse("・五")).toBeCloseTo(0.5);
+    expect(number.parse("・一二三")).toBeCloseTo(0.123);
+    
+    // Formatting with dot
+    expect(japaneseInformal.parse(0.5)).toBe("零・五");
+    expect(japaneseInformal.parse(100.01)).toBe("一百・零一");
+    
+    // Math with dot
+    expect(japaneseInformal.add(["一・五", "二・五"])).toBe("四");
+    expect(japaneseInformal.multiply(["一・五", "二"])).toBe("三");
+  });
 });
 
 describe("exhaustive formatter coverage", () => {
@@ -808,8 +836,8 @@ describe("exhaustive formatter coverage", () => {
     expect(simpChineseInformal.parse(1.5)).toBe("一点五");
     expect(koreanHangulFormal.parse(1.5)).toBe("일점오");
     expect(koreanHanjaFormal.parse(1.5)).toBe("壹점五");
-    expect(japaneseFormal.parse(1.5)).toBe("壱点伍");
-    expect(japaneseInformal.parse(1.5)).toBe("一点五");
+    expect(japaneseFormal.parse(1.5)).toBe("壱点五");
+    expect(japaneseInformal.parse(1.5)).toBe("一・五");
   });
 
   it("formatters handle section zero bridging at various positions", () => {

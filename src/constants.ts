@@ -14,7 +14,7 @@ export const SIMP_FORMAL_DIGITS = toDigitArray9("壹贰叁肆伍陆柒捌玖");
 export const KOREAN_HANGUL_DIGITS = toDigitArray9("일이삼사오육칠팔구");
 export const KOREAN_HANJA_FORMAL_DIGITS = toDigitArray9("壹貳參四五六七八九");
 export const KOREAN_HANJA_INFORMAL_DIGITS = toDigitArray9("一二三四五六七八九");
-export const JAPANESE_FORMAL_DIGITS = toDigitArray9("壱弍参四伍六七八九");
+export const JAPANESE_FORMAL_DIGITS = toDigitArray9("壱弐参四五六七八九");
 export const JAPANESE_INFORMAL_DIGITS = toDigitArray9("一二三四五六七八九");
 
 export const STEMS = ("甲乙丙丁戊己庚辛壬癸").split("");
@@ -57,14 +57,18 @@ export const CANONICAL_DIGITS: Record<string, number> = {
   "○": 0,
   一: 1,
   壹: 1,
+  壱: 1,
   二: 2,
   貳: 2,
   贰: 2,
   兩: 2,
   两: 2,
+  弐: 2,
+  弍: 2,
   三: 3,
   參: 3,
   叁: 3,
+  参: 3,
   四: 4,
   肆: 4,
   五: 5,
@@ -172,7 +176,7 @@ export const JAPANESE_FORMAL_SET: DigitSet = {
 
 export const JAPANESE_INFORMAL_SET: DigitSet = {
   zero: "零",
-  point: "点",
+  point: "・",
   digits: JAPANESE_INFORMAL_DIGITS,
   smallUnits: ["十", "百", "千"],
   bigUnits: [...JAPANESE_BIG_UNITS],

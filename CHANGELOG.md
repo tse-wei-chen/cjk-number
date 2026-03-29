@@ -1,6 +1,12 @@
 # Changelog
 
 All notable changes to this project will be documented in this file.
+## [0.4.3] - 2026-03-29
+
+### Bug Fixes
+
+- **Japanese Decimal Markers**: Updated `japaneseInformal` to use the middle dot (`・`) as the default decimal separator. Enhanced input normalization to support both `・` and `点` for Japanese and other systems.
+- **Strict Validation**: Expanded `strict: true` validation to include the middle dot (`・`) and ensure comprehensive character coverage for Japanese numeric strings.
 
 ## [0.4.2] - 2026-03-28
 

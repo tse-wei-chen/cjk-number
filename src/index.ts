@@ -41,6 +41,7 @@ const NORMALIZE_MAP: Record<string, string> = {
   점: ".",
   點: ".",
   点: ".",
+  "・": ".",
   무량대수: "无量大数",
   불가사의: "不可思议",
   나유타: "那由他",
@@ -51,6 +52,7 @@ const NORMALIZE_MAP: Record<string, string> = {
   간: "涧",
   양: "穰",
   자: "秭",
+  𥝱: "秭",
   해: "垓",
   경: "京",
   조: "兆",
@@ -236,7 +238,7 @@ let allowedRegex: RegExp | undefined;
 function validateStrictCharacters(input: string): void {
   if (!allowedRegex) {
     allowedRegex =
-      /^[0-9零〇○一二三四五六七八九十百千萬万億亿兆京垓秭穰穣溝沟澗涧正載载極极恆恒河沙阿僧祇那由他不思議议可無无量大數数點点점壹貳贰參叁肆伍陸陆柒捌玖兩两拾佰仟負负壱弍弐参甲乙丙丁戊己庚辛壬癸子丑寅卯辰巳午未申酉戌亥ぁ-ゟ゠-ヿ가-힣.-]+$/;
+      /^[0-9零〇○一二三四五六七八九十百千萬万億亿兆京垓秭𥝱穰穣溝沟澗涧正載载極极恆恒河沙阿僧祇那由他不思議议可無无量大數数點点점壹貳參叁肆伍陸陆柒捌玖兩两拾佰仟負负壱弍弐参甲乙丙丁戊己庚辛壬癸子丑寅卯辰巳午未申酉戌亥ぁ-ゟ゠-ヿ가-힣.・-]+$/;
   }
   if (!allowedRegex.test(input)) {
     throw new SyntaxError(
@@ -266,10 +268,7 @@ function fromCycle(
   return chars[Number(normalized)];
 }
 
-function parseCycle(
-  input: string,
-  chars: readonly string[],
-): number {
+function parseCycle(input: string, chars: readonly string[]): number {
   const index = chars.indexOf(input);
   if (index < 0) {
     throw new SyntaxError(`Unknown symbol ${input}`);
@@ -301,7 +300,11 @@ function formatSection(section: number, set: DigitSet): string {
     }
 
     const isTenPosition = value === 10;
-    const canDropOne = isTenPosition && digit === 1 && output.length === 0 && (set.dropTenOne ?? true);
+    const canDropOne =
+      isTenPosition &&
+      digit === 1 &&
+      output.length === 0 &&
+      (set.dropTenOne ?? true);
 
     if (!canDropOne) {
       output += set.digits[digit - 1];
@@ -447,7 +450,7 @@ function parseValue(
     // Legacy path: fall back to Number (may lose precision for very large integers).
     if (intValue > BigInt(Number.MAX_SAFE_INTEGER)) {
       throw new RangeError(
-        "Decimal parse does not support integer part above MAX_SAFE_INTEGER. Use { mode: \"exactDecimal\" } to bypass.",
+        'Decimal parse does not support integer part above MAX_SAFE_INTEGER. Use { mode: "exactDecimal" } to bypass.',
       );
     }
 
@@ -480,17 +483,19 @@ function fromScaled(val: ScaledValue): NumberLike {
   str = str.padStart(val.scale + 1, "0");
   const intPart = str.slice(0, -val.scale);
   const fracPart = str.slice(-val.scale).replace(/0+$/, "");
-  const res = fracPart ? `${intPart || "0"}.${fracPart}` : (intPart || "0");
+  const res = fracPart ? `${intPart || "0"}.${fracPart}` : intPart || "0";
   return (val.big < 0n ? "-" : "") + res;
 }
 
-function align(a: ScaledValue, b: ScaledValue): { a: bigint; b: bigint; scale: number } {
+function align(
+  a: ScaledValue,
+  b: ScaledValue,
+): { a: bigint; b: bigint; scale: number } {
   const maxScale = Math.max(a.scale, b.scale);
   const bigA = a.big * 10n ** BigInt(maxScale - a.scale);
   const bigB = b.big * 10n ** BigInt(maxScale - b.scale);
   return { a: bigA, b: bigB, scale: maxScale };
 }
-
 
 function mixedModulo(a: NumberLike, b: NumberLike): NumberLike {
   const scaledA = toScaled(a);
@@ -607,7 +612,8 @@ function createSystem(set: DigitSet) {
      */
     pow(base: string, exponent: string | number): string {
       const numBase = number.parse(base);
-      const numExp = typeof exponent === "string" ? number.parse(exponent) : exponent;
+      const numExp =
+        typeof exponent === "string" ? number.parse(exponent) : exponent;
       return this.parse(mixedPow(numBase, numExp));
     },
     /**
