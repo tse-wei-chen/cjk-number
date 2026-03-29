@@ -1,5 +1,10 @@
 # cjk-number
 
+![Static Badge](https://img.shields.io/badge/deepwiki-chat-purple?logo=data%3Aimage%2Fpng%3Bbase64%2CiVBORw0KGgoAAAANSUhEUgAAABwAAAAcCAMAAABF0y%2BmAAAAdVBMVEVHcExXd8pfmdlLbsZDZ8RNb8dhfs1YeMpEaMRxn9t%2FzrRNcMd8rNNIa8VkwqJdv51lw6JRcshwx6lgwJ9pxKWez9trxqdcv5xqxaZzyay32eJVn91Hl9tBk9lLmdtlqeFcvpxIl9tKmNtRnNxRndxaot9Unt03h7TUAAAAJ3RSTlMAj2L%2F%2F%2FVTdf80PMIm%2F9v%2F7tuA%2F74XoP90XgmM%2F%2F%2FpRv%2FF88%2B1WXU%2FzfQTAAAA8UlEQVR4AY3RBRKDUAwE0IUGd3eo3%2F%2BIzZe6sThvYCeA9TGMr2RuiCz7sznkitif0f2CniiURgL9B7ItNwjtiDSGcZLeOOO7xIvlEkUG8oRTlMoq1RWF8LIsBOJE6hMGkPmKVVlWqIpHhEUCDdRF0xRx0UiMbxNGxGWtvNsUXZfyDrf0Yrg2kWkB3EnUmnfMBfZ3G8ZpXvRrk6Lt0m2RX22cRAbkRcPDF6o61e%2BcZHZilLq%2Fj%2FKCKvEHHD0s%2B9l7QRwmzWJ35GqBpUZ%2BYjqGizCOydVJ%2FPhHQzGQwpO6fMn5jviGCz7mtJ%2FEl%2FqW4YzVuQCH8hlPYGhUDAAAAABJRU5ErkJggg%3D%3D&link=https%3A%2F%2Fdeepwiki.com%2Ftse-wei-chen%2Fcjk-number)
+![GitHub Actions Workflow Status](https://img.shields.io/github/actions/workflow/status/tse-wei-chen/cjk-number/ci.yml)
+![GitHub License](https://img.shields.io/github/license/tse-wei-chen/cjk-number)
+
+
 Convert numbers between Arabic values and CJK numeral systems.
 
 Supported domains include:
